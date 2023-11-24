@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: 'Times New Roman', serif; /* Changement de police */
+            background-color: #d3d3d3; /* Couleur de fond plus sombre */
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            text-align: center;
+            background-color: #f8f8f8; /* Couleur de fond du container plus claire */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Ombre plus prononcée */
+        }
+
+        h1 {
+            color: #1a1a1a; /* Couleur plus foncée pour le titre */
+        }
+
+        p {
+            color: #404040; /* Couleur de texte plus sombre */
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50; /* Changement de la couleur du bouton */
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #388E3C; /* Changement de la couleur au survol */
+        }
+
+        .logo {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+    <title>Music Voting App</title>
+</head>
+<body>
+    
+    <div class="container">
+        <img class="logo" src="{{ url_for('static', filename='path/to/your/logo.png') }}" alt="Company Logo">
+        <h1>Welcome to the Music Voting App!</h1>
+
+        <p>
+            Here, you can vote for the music you want to hear in the pub.
+        </p>
+
+        <p>
+            <a href="{{ url_for('voting') }}" class="btn">Start Voting</a>
+        </p>
+    </div>
+
+    <!-- Add more content, sections, and links as needed -->
+
+    <div id="voting-section">
+        <!-- Add content for the voting section here -->
+    </div>
+
+</body>
+</html>

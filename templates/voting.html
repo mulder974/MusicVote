@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Search</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Function to handle the search input change event
+        function handleSearchInput() {
+            var query = $('#search-input').val();
+            if (query.length >= 1) {
+                // Send an AJAX request to the Flask server to get search results
+                $.ajax({
+                    url: '/search',
+                    type: 'POST',
+                    data: { query: query },
+                    success: function(data) {
+                        // Update the search results container with the returned HTML
+                        $('#search-results-container').html(data);
+                    }
+                });
+            } else {
+                // Clear the search results container if the search query is empty
+                $('#search-results-container').empty();
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Music Search</h1>
+    <form>
+        <input type="text" id="search-input" placeholder="Enter a song name" oninput="handleSearchInput()">
+    </form>
+    <div id="search-results-container"></div>
+</body>
+</html>
