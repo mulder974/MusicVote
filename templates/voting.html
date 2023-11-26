@@ -5,7 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Search</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        form {
+            text-align: center;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        #search-results-container {
+            margin-top: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 20px;
+        }
+        h3 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        p {
+            margin: 0;
+        }
+        .center {
+        text-align: center;
+    }
+        .vote-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px;
+            margin-top: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+    </style>
+
+
     <script>
+
+        var lastTrackId = null;
+
         // Function to handle the search input change event
         function handleSearchInput() {
             var query = $('#search-input').val();
@@ -25,8 +97,65 @@
                 $('#search-results-container').empty();
             }
         }
+        
+                // Function to update the currently playing track
+
+    
+
+        function fetchCurrentTrack() {
+    console.log("fetchCurrentTrack called");
+    $.ajax({
+        url: '/current_track',
+        type: 'GET',
+        success: function(response) {
+            console.log("AJAX success, response:", response);
+            var newTrackId = response;  // Assuming response contains track_id
+            console.log("New Track ID: ", newTrackId);
+
+            // Update the iframe only if the track ID has changed
+            if (newTrackId && newTrackId !== lastTrackId) {
+                updateCurrentlyPlaying(newTrackId);
+                lastTrackId = newTrackId;  // Update the last track ID
+            }
+        },
+        error: function() {
+            console.log("Error fetching current track.");
+        }
+    });
+}
+
+function updateCurrentlyPlaying(trackId) {
+            console.log("updateCurrentlyPlaying called with trackId:", trackId);
+            var iframe = document.getElementById('spotify-iframe');
+            iframe.src = `https://open.spotify.com/embed/track/${trackId}`;
+        }
+        
+setInterval(fetchCurrentTrack, 5000);
+
+$(document).ready(function() {
+    console.log("Document ready");
+    fetchCurrentTrack();
+});
+
     </script>
 </head>
+
+<body>
+    <div id="spotify-player" class="center">
+        <h1>Currently Playing:</h1>
+        <iframe src="" id="spotify-iframe" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+    </div>
+
+    <h1>Etat des votes</h1>
+    <div id="chart-container">
+        
+        <ul id="chart-list">
+            <li class="chart-item">
+                <span class="song-name">Song 1</span>
+                <span class="vote-count">10 votes</span>
+            </li>
+            <li class="chart-item">
+               
 <body>
     <h1>Music Search</h1>
     <form>
