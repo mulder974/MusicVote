@@ -5,7 +5,7 @@ import requests
 import base64
 
 
-from flask import Flask, render_template, render_template_string, request, redirect, session
+from flask import Flask, render_template, render_template_string, request, redirect, session, jsonify
 
 
 
@@ -26,9 +26,10 @@ def index():
 @app.route('/current_track')
 def current_track():
     # access_token = session['access_token'] 
-    track_id = spotify.get_current_playing_track("BQBVVjuHilMo2cTUx-km1eRXlwwYreZNJsx2x_H5HToivINDTZE5-SFY5rBALvBVC1M7IIoT_wK_9O9b8MVXCocK1hLyYeUO_xM_1LGIxKlah1dNkfkRITguPKaW6roQfKBHbhezLNGy3enfqPY6qH4M11GVwVXlPHRxpRjGVVQksc5YWA1MY_KRAM9ux9sIgAoYXLWwYIm0dv-yZ3OBs0tOKfDG")  
-    print(track_id)
-    return track_id
+    track_name, artist_name, album_img_src = spotify.get_current_playing_track("BQD0vUprGfGpSEy9-vMzqNr9NuyDzOiW_bCaQIkF1drCnMKhUF_ItzaBF15-1wQMopsnMdUJug1zXEwoeM-4EQT8cryIZCauhefEmaZTajKGSpK30gJu0710zfeg7fOsEJAGZHedVKBd0u0aPFydDPnd81J6cdznkPezb9ItkPocxq47RS8QLsBhR9dpfDExXGwybodJgQJAzpqSuE6I4a55CYl5")  
+    
+    return jsonify({'name': track_name, 'artist': artist_name, 'album_image_src': album_img_src})
+
 
 
 
@@ -101,7 +102,7 @@ def voting():
 def search():
     query = request.form.get('query')
 
-    songs = spotify.search_song("BQCtDZW11VSCSLnz_I-t-znI7QL-he9_-OHIJvfc6ZwOEbwjOvuNh1eXPeZkwaKH4eacqA4IPdTxGN2QvxO4QCK4yy_hw31k4mqq_UCTRaIY43e7EFQ", query)
+    songs = spotify.search_song("BQD0vUprGfGpSEy9-vMzqNr9NuyDzOiW_bCaQIkF1drCnMKhUF_ItzaBF15-1wQMopsnMdUJug1zXEwoeM-4EQT8cryIZCauhefEmaZTajKGSpK30gJu0710zfeg7fOsEJAGZHedVKBd0u0aPFydDPnd81J6cdznkPezb9ItkPocxq47RS8QLsBhR9dpfDExXGwybodJgQJAzpqSuE6I4a55CYl5", query)
     
     search_results_template = """
     <style>
@@ -132,18 +133,22 @@ def search():
             margin: 0;
         }
         .vote-button {
-            background-color: #4CAF50;
+           background-color: #b32e2e;
             color: white;
-            border: none;
             padding: 5px 10px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 12px;
-            margin-top: 5px;
-            cursor: pointer;
+            border: none;
             border-radius: 3px;
+            text-transform: uppercase; 
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s;
         }
+        .vote-button:hover {
+            background-color: #9b2828; 
+        }
+
+
     </style>
     <div class="container">
         <h2>Search Results</h2>
@@ -151,9 +156,9 @@ def search():
             {% for song in songs %}
             <li>
                 <h3>{{ song['name'] }}</h3>
-                <p>Artist: {{ song['album']['artists'][0]['name'] }}</p>
+                <p>{{ song['album']['artists'][0]['name'] }}</p>
 
-                <button class="vote-button">Vote</button>
+                <button class="vote-button">Voter</button>
             </li>
             {% endfor %}
         </ul>

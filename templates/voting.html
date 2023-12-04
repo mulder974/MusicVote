@@ -6,77 +6,113 @@
     <title>Music Search</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f8f8;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        form {
-            text-align: center;
-        }
-        input {
-            padding: 10px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        #search-results-container {
-            margin-top: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            margin-bottom: 20px;
-        }
-        h3 {
-            font-size: 20px;
-            margin-bottom: 5px;
-        }
-        p {
-            margin: 0;
-        }
-        .center {
-        text-align: center;
+      body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Times New Roman', serif; /* Assuming the site uses a serif font like Times New Roman */
+}
+
+.main-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background-color: #fff; /* Based on the site's light background */
+}
+
+.content {
+    text-align: center;
+    color: #333; /* Dark grey text similar to the site */
+}
+
+.music-displayer {
+    background: #f9f9f9; /* Light grey background for the displayer */
+    border-radius: 5px; /* Softer border radius */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Softer shadow */
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.album-cover img {
+    max-width: 120px;
+    max-height: 120px;
+    border-radius: 5px; /* Softer edges on the image */
+    object-fit: cover;
+}
+
+.track-details {
+    margin-top: 10px;
+}
+
+.track-title, .track-artist {
+    font-family: 'Arial', sans-serif; /* Assuming the site uses a sans-serif font like Arial */
+}
+
+.track-title {
+    font-size: 1.5em; /* Larger font size for titles */
+    font-weight: bold; /* Bold font weight for titles */
+    color: #333; /* Dark grey color for the title */
+}
+
+.track-artist {
+    font-size: 1em;
+    color: #666; /* Lighter grey for the artist name */
+}
+
+/* Styles for buttons, if any */
+.button {
+    background-color: #b32e2e; /* Red accent color from the site */
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 3px;
+    text-transform: uppercase; /* Style from the site buttons */
+    font-weight: bold;
+    cursor: pointer;
+    margin: 5px;
+    transition: background-color 0.3s;
+}
+
+.button:hover {
+    background-color: #9b2828; /* Darker shade on hover */
+}
+
+@media only screen and (max-width: 768px) {
+    .music-displayer {
+        width: 90%; /* Adjust width for smaller screens */
+        margin: 20px auto; /* Centering in smaller screens */
     }
-        .vote-button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 12px;
-            margin-top: 5px;
-            cursor: pointer;
-            border-radius: 3px;
-        }
+
+    .album-cover img {
+        max-width: 100px; /* Smaller album cover */
+        max-height: 100px;
+    }
+
+    .container, .music-displayer-container {
+        width: 90%; /* Adjust container width */
+    }
+
+    input[type="text"] {
+        width: calc(100% - 20px); /* Full width input field */
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .track-details {
+        font-size: 0.9em; /* Smaller text on very small screens */
+    }
+
+    .album-cover img {
+        max-width: 80px; /* Even smaller album cover */
+        max-height: 80px;
+    }
+}
     </style>
 
 
     <script>
 
-        var lastTrackId = null;
+        var lastTrackName = null;
 
         // Function to handle the search input change event
         function handleSearchInput() {
@@ -109,13 +145,16 @@
         type: 'GET',
         success: function(response) {
             console.log("AJAX success, response:", response);
-            var newTrackId = response;  // Assuming response contains track_id
-            console.log("New Track ID: ", newTrackId);
+            var newTrackName = response.name;  // Assuming response contains track_id
+            var newTrackArtist = response.artist;
+            var newAlbumSource = response.album_image_src;
+            
+            
 
             // Update the iframe only if the track ID has changed
-            if (newTrackId && newTrackId !== lastTrackId) {
-                updateCurrentlyPlaying(newTrackId);
-                lastTrackId = newTrackId;  // Update the last track ID
+            if (newTrackName && newTrackName !== lastTrackName) {
+                updateCurrentlyPlaying(newTrackName,newTrackArtist,newAlbumSource);
+                lastTrackName = newTrackName;  // Update the last track ID
             }
         },
         error: function() {
@@ -124,9 +163,16 @@
     });
 }
 
-function updateCurrentlyPlaying(trackId) {
-            console.log("updateCurrentlyPlaying called with trackId:", trackId);
-            var iframe = document.getElementById('spotify-iframe');
+function updateCurrentlyPlaying(trackName, artistName, albumImageSrc) {
+            var albumCover = document.getElementById('album-cover');
+            albumCover.src = albumImageSrc;
+            
+            var trackTitle = document.getElementById('track-title');
+            trackTitle.textContent = trackName;
+            
+            var trackArtist = document.getElementById('track-artist');
+            trackArtist.textContent = artistName;
+            
             iframe.src = `https://open.spotify.com/embed/track/${trackId}`;
         }
         
@@ -141,10 +187,25 @@ $(document).ready(function() {
 </head>
 
 <body>
-    <div id="spotify-player" class="center">
+    <div class="main-container">
+        <div class="content">
+            <h1>Currently Playing:</h1>
+            <div class="music-displayer" id="musicDisplayer">
+                <div class="album-cover">
+                    <img src="" alt="Album Cover" id="album-cover">
+                </div>
+                <div class="track-details">
+                    <span id="track-title">Track Title</span>
+                    <span id="track-artist">Artist Name</span>
+                </div>
+            </div>
+
+
+
+    <!-- <div id="spotify-player" class="center">
         <h1>Currently Playing:</h1>
         <iframe src="" id="spotify-iframe" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-    </div>
+    </div> -->
 
     <h1>Etat des votes</h1>
     <div id="chart-container">
@@ -155,8 +216,9 @@ $(document).ready(function() {
                 <span class="vote-count">10 votes</span>
             </li>
             <li class="chart-item">
+    </div>
+
                
-<body>
     <h1>Music Search</h1>
     <form>
         <input type="text" id="search-input" placeholder="Enter a song name" oninput="handleSearchInput()">

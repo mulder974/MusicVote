@@ -4,22 +4,6 @@ import requests
 
 
 
-def get_access_token(id,user_secret):
-    url = 'https://accounts.spotify.com/api/token'
-    headers = {
-        'Content-Type': "application/x-www-form-urlencoded"
-    }
-
-    data = {
-        'grant_type': 'client_credentials',
-        'client_id': id,
-        'client_secret': user_secret
-    }
-    response = requests.post(url, headers=headers, data=data)
-    access_token = response.json()['access_token']
-
-    return response.json()
-
 
 def search_song(access_token,query):
   # Set the endpoint URL
@@ -35,15 +19,15 @@ def search_song(access_token,query):
 
     # Get the JSON response
     data = response.json()
-
+    
     # Extract the relevant information from the response
-    tracks = data['tracks']['items']
+    tracks = data['tracks']['items'][:5]
 
     return tracks
 
 #    # Print the information of each track
 #     for track in tracks:
-#         print(f"Track: {track['name']}")
+#         print(f"Track: {track['name']}")  
 #         print(f"Artist: {track['artists'][0]['name']}")
 #         print(f"Album: {track['album']['name']}")
 #         print(f"Preview URL: {track['preview_url']}")
@@ -57,19 +41,23 @@ def get_current_playing_track(access_token):
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
-        track_id = data['item']['id']  # Extract the track ID
-        return track_id
+        track_name = data['item']['name']
+        artist_name = data['item']['album']['artists'][0]['name']
+        album_id = data['item']['album']['id']
+        album_img_src = data['item']['album']['images'][0]['url']
+
+        print(track_name)
+        print(artist_name)
+        print(album_img_src)
+      
+
+        
+        return track_name, artist_name, album_img_src
     else:
         # Handle errors or no current playing track
         return response
 
-# Usage
-access_token = "your_access_token"  # Replace with your actual access token
-current_track_id = get_current_playing_track(access_token)
-if current_track_id:
-    print(f"Current playing track ID: {current_track_id}")
-else:
-    print("No track is currently playing or unable to fetch the track.")
+
 
 
 
