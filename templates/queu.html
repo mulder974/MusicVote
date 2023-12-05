@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Queue</title>
+ 
+</head>
+<body>
+
+    
+    <div class="queue-container">
+        <header>
+            <h1>O'Sully'S</h1>
+            <h2>File d'attente</h2>
+        </header>
+        <!-- Inside the queue container, add a placeholder for the empty message -->
+    <div class="queue">
+    <div id="empty-queue-message" class="empty-queue-message">
+        <p>Aucun vote n'a été effectué, Choisissez votre son favori dans l'onglet "rechercher"</p>
+    </div>
+    <!-- Song entries will be inserted here by JavaScript -->
+    </div>
+        <div class="now-playing-bar">
+            <img src="" alt="Album Cover" id="album-cover" class="now-playing-cover">
+            <div class="now-playing-info">
+                <span id="track-title" class="now-playing-title">Song Title</span>
+                <span id="track-artist" class="now-playing-artist">Artist Name</span>
+            </div>
+                <!-- Optionally, add controls like play/pause buttons -->
+            </div>   
+    </div>
+    <footer>
+            
+        <nav>
+            <ul>
+                <li class="active"><a href="#queue">File d'attente</a></li>
+                <li><a href="/searching">Rechercher</a></li>
+                <li><a href="#info">Info</a></li>
+            </ul>
+        </nav>
+        
+            <!-- ... other footer content ... -->
+        
+            
+        
+    </nav>
+</footer>
+    
+<script src="{{ url_for('static', filename='js/queu.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vote.js') }}"></script>
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+</body>
+</html>

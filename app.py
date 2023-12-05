@@ -3,17 +3,18 @@ import security
 from urllib.parse import urlencode
 import requests
 import base64
-
-
 from flask import Flask, render_template, render_template_string, request, redirect, session, jsonify
 
 
+voted_songs = {}
 
 
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
+
+# In-memory storage for demonstration purposes
 
 
 
@@ -26,7 +27,7 @@ def index():
 @app.route('/current_track')
 def current_track():
     # access_token = session['access_token'] 
-    track_name, artist_name, album_img_src = spotify.get_current_playing_track("BQD0vUprGfGpSEy9-vMzqNr9NuyDzOiW_bCaQIkF1drCnMKhUF_ItzaBF15-1wQMopsnMdUJug1zXEwoeM-4EQT8cryIZCauhefEmaZTajKGSpK30gJu0710zfeg7fOsEJAGZHedVKBd0u0aPFydDPnd81J6cdznkPezb9ItkPocxq47RS8QLsBhR9dpfDExXGwybodJgQJAzpqSuE6I4a55CYl5")  
+    track_name, artist_name, album_img_src = spotify.get_current_playing_track("BQCv4QPPlv-80jQI-LYnYjA7RCfZ6gHKQPQnZvRxBCsGgGHz6-3Hyavu-mkpc44MPCZvGe7U5j4mCL22Sody9X3kSet3PcF8e9tCbPfsEu7KCrS-9yRZKRmIMfOBzTAbgmPolKwwkcXvbmUM8ovhntDKNx275ulM8U_imDAwJs_Oa3q5J4sYp76xPc3Ogmd0MKxJ9J8Ji_B0VmNvBZK2xzLLBubc")  
     
     return jsonify({'name': track_name, 'artist': artist_name, 'album_image_src': album_img_src})
 
@@ -98,71 +99,148 @@ def callback():
 def voting():
     return render_template('voting.html')
 
+@app.route('/get_songs')
+def get_songs():
+    return jsonify(voted_songs)
+
+@app.route('/vote', methods=['POST'])
+def vote():
+    data = request.get_json()
+    
+    song_id = data.get('song_id')
+    
+    if song_id in voted_songs:
+        voted_songs[song_id]["votes"] += 1
+
+    else:
+        voted_songs[song_id] = {}
+        voted_songs[song_id]["votes"] = 1
+        voted_songs[song_id]["name"] = data.get('song_name')
+        voted_songs[song_id]["artist_name"] = data.get('artist_name')
+        voted_songs[song_id]["song_image"] = data.get('song_image')
+    return jsonify(success=True)
+    
+    # # Fetch the song data. You need to replace this with your actual song fetching logic.
+    # song = get_song_by_id(song_id)
+    # song['votes'] = votes[song_id]
+
+    # return jsonify(success=True, song=song)
+
+@app.route('/searching')
+def searching():
+    return render_template('search.html')
+
+
+@app.route('/queu')
+def queu():
+    return render_template('queu.html')
+
+
+
 @app.route('/search', methods=['POST'])
 def search():
     query = request.form.get('query')
 
-    songs = spotify.search_song("BQD0vUprGfGpSEy9-vMzqNr9NuyDzOiW_bCaQIkF1drCnMKhUF_ItzaBF15-1wQMopsnMdUJug1zXEwoeM-4EQT8cryIZCauhefEmaZTajKGSpK30gJu0710zfeg7fOsEJAGZHedVKBd0u0aPFydDPnd81J6cdznkPezb9ItkPocxq47RS8QLsBhR9dpfDExXGwybodJgQJAzpqSuE6I4a55CYl5", query)
+    songs = spotify.search_song("BQCv4QPPlv-80jQI-LYnYjA7RCfZ6gHKQPQnZvRxBCsGgGHz6-3Hyavu-mkpc44MPCZvGe7U5j4mCL22Sody9X3kSet3PcF8e9tCbPfsEu7KCrS-9yRZKRmIMfOBzTAbgmPolKwwkcXvbmUM8ovhntDKNx275ulM8U_imDAwJs_Oa3q5J4sYp76xPc3Ogmd0MKxJ9J8Ji_B0VmNvBZK2xzLLBubc", query)
     
     search_results_template = """
     <style>
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f8f8;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            margin-bottom: 20px;
-        }
-        h3 {
-            font-size: 20px;
-            margin-bottom: 5px;
-        }
-        p {
-            margin: 0;
-        }
-        .vote-button {
-           background-color: #b32e2e;
-            color: white;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 3px;
-            text-transform: uppercase; 
-            font-weight: bold;
-            cursor: pointer;
-            margin: 5px;
-            transition: background-color 0.3s;
-        }
-        .vote-button:hover {
-            background-color: #9b2828; 
-        }
+     .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f8f8f8;
+}
+
+h2 {
+    font-size: 24px;
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.songs-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.song-card {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 15px;
+    transition: transform 0.3s ease;
+}
+
+.song-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.album-cover {
+    width: 60px; /* Adjust size as needed */
+    height: 60px;
+    border-radius: 30px; /* Makes it circular */
+    object-fit: cover;
+    margin-right: 15px;
+}
+
+.song-info {
+    flex-grow: 1;
+}
+
+.song-name {
+    font-size: 18px;
+    margin: 0;
+    color: #333;
+}
+
+.song-artist {
+    font-size: 14px;
+    color: #666;
+}
+
+.vote-button {
+    background-color: #9a191dcd;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px; /* Pill shape */
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.vote-button:hover {
+    background-color: #831519cd
+}
 
 
     </style>
     <div class="container">
-        <h2>Search Results</h2>
-        <ul>
-            {% for song in songs %}
-            <li>
-                <h3>{{ song['name'] }}</h3>
-                <p>{{ song['album']['artists'][0]['name'] }}</p>
-
-                <button class="vote-button">Voter</button>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
+    <h2>Search Results</h2>
+    <ul class="songs-list">
+        {% for song in songs %}
+        <li class="song-card">
+            <img class="album-cover" src="{{ song['album']['images'][2]['url'] }}" alt="Album Cover">
+            <div class="song-info">
+                <h3 class="song-name">{{ song['name'] }}</h3>
+                <p class="song-artist">{{ song['album']['artists'][0]['name'] }}</p>
+            </div>
+            <button class="vote-button" 
+                    data-songId="{{ song['id'] }}" 
+                    data-songName="{{ song['name'] }}" 
+                    data-artistName="{{ song['album']['artists'][0]['name'] }}"
+                    data-songImage = "{{ song['album']['images'][2]['url'] }}" 
+                    >Voter !</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
     """
     
     rendered_results = render_template_string(search_results_template, songs=songs)

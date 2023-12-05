@@ -1,0 +1,289 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #fcf5f5;
+}
+
+a {
+  color: inherit; /* This will make the link use the color of its parent element */
+  text-decoration: none; /* This removes the underline */
+}
+
+
+.queue-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.song-container {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.song-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.album-cover {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-right: 15px;
+  object-fit: cover;
+}
+
+.song-details {
+  flex-grow: 1;
+}
+
+.song-title {
+  font-size: 16px;
+  margin: 0;
+  color: #333;
+}
+
+.song-artist {
+  font-size: 14px;
+  color: #666;
+  margin: 5px 0;
+}
+
+header {
+  text-align: center;
+  padding: 20px;
+  background-color: #9a191d;
+  color: white;
+}
+
+.empty-queue-message p {
+  text-align: center;
+  margin-top: 50px; /* Adjust as needed for your layout */
+  color: #666;
+}
+.queue {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.song {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.song img {
+  width: 50px;
+  height: 50px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.song-info {
+  flex-grow: 1;
+  margin-left: 15px;
+}
+
+.song-title {
+  font-weight: bold;
+}
+
+.song-artist {
+  color: #666;
+}
+
+
+.vote {
+  display: flex;
+  align-items: center;
+}
+
+.vote-count {
+  margin-right: 10px;
+}
+
+.vote-btn {
+  border: none;
+  background-color: #ff4081;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#search-input {
+  flex-grow: 1; /* Take up available space */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 20px; /* Pill-shaped input */
+  margin-right: 10px; /* Spacing between input and button */
+}
+
+/* Style for search button */
+#search-button {
+  background-color: #ff4081;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px; /* Pill-shaped button */
+  cursor: pointer;
+}
+
+footer {
+  background-color: #f8f8f8;
+  padding: 10px 20px;
+}
+
+footer nav ul li a {
+  color: inherit; /* Or set to any color you want */
+  text-decoration: none; /* Remove underline */
+  display: block; /* This will make the entire area of the list item clickable */
+}
+
+/* Style for anchor tags on hover and focus for better accessibility */
+footer nav ul li a:hover,
+footer nav ul li a:focus {
+  color: #ffffffcd; /* Color when the user hovers over or focuses on the link */
+  text-decoration: none; /* Still no underline on hover/focus */
+}
+
+
+footer nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: space-around;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.95); /* Semi-transparent white background */
+    backdrop-filter: blur(5px);
+    box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1); /* subtle shadow for a "lifted" effect */
+}
+
+footer nav ul li {
+    flex: 1; /* Distribute space evenly */
+    text-align: center; /* Center text inside the buttons */
+    padding: 10px 5px; /* Padding for tap area */
+    border-radius: 3px; /* Slightly rounded corners for the buttons */
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
+}
+
+footer nav ul li:hover {
+    background-color: #9e3e4176; /* Slight hover effect */
+}
+
+footer nav ul li.active {
+    background-color: #831519cd; /* Active color */
+    color: white; /* Text color for active tab */
+}
+
+
+
+@media only screen and (max-width: 600px) {
+  .song img {
+      width: 40px;
+      height: 40px;
+  }
+
+  .song-info {
+      margin-left: 10px;
+  }
+
+  .vote-btn {
+      padding: 3px 7px;
+  }
+}
+.search-container {
+  padding: 20px;
+}
+
+.search-header {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+#search-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#search-button {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  padding: 10px 20px;
+  background-color: #ff4081;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#search-button:hover {
+  background-color: #e83770;
+}
+
+.search-results {
+  /* Add any specific styles for your search results here */
+}
+
+/* ... existing styles ... */
+
+.now-playing-bar {
+  position: bottom;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color:  rgb(148, 12, 12, 0.75);; /* Adjust transparency as needed */
+  color: #f8f8f8;
+  padding: 10px 20px;
+ 
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(10px); /* Adjust the blur effect as needed */
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000; /* Make sure this is higher than other elements */
+}
+
+.now-playing-cover {
+  width: 40px;
+  opacity: 1;
+  height: 40px;
+  margin-right: 10px;
+  object-fit: cover;
+  border-radius: 3px; /* Adjust as needed */
+  opacity: 1;
+}
+
+.now-playing-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.now-playing-title {
+  font-size: 16px; /* Adjust font size as needed */
+  font-weight: bold;
+}
+
+.now-playing-artist {
+  font-size: 14px; /* Adjust font size as needed */
+}
+
+/* ... additional styles ... */
+
+
+
+/* ... additional styles ... */
+
+
+/* Add additional responsive design styles as necessary */

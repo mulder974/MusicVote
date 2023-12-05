@@ -1,5 +1,5 @@
 import requests
-
+import pprint
 
 
 
@@ -22,7 +22,7 @@ def search_song(access_token,query):
     
     # Extract the relevant information from the response
     tracks = data['tracks']['items'][:5]
-
+    pprint.pprint(tracks[0])
     return tracks
 
 #    # Print the information of each track
@@ -46,9 +46,7 @@ def get_current_playing_track(access_token):
         album_id = data['item']['album']['id']
         album_img_src = data['item']['album']['images'][0]['url']
 
-        print(track_name)
-        print(artist_name)
-        print(album_img_src)
+    
       
 
         
