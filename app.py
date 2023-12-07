@@ -8,6 +8,7 @@ import security
 import time
 
 musics_votes = {}
+song_in_queue = ""
 
 
 
@@ -15,7 +16,7 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 MAX_VOTES_PER_SONG = 1
-spotify_token = "BQAnhKu4Nvld7VPadpze6u-RWDky8vmF5A6WtULaS0QW6OZKcXDzwo4Z1gHSL8vF_bjK_6YDvUcrXr7EZW3BTugzVyWd_EZ2MWqTaq_byKb53HwD6zUAPTGFv3Q6qoan2yIqVEf9jgSD6PUQcR81wXUibAxj8CZ-ZQtkD--xWj_p7X4J4rNXWk84TewbwDZlUMSq0g_S0FzXmn9QjzoJ5w5Cpow2"
+spotify_token = "BQBcP0YYyt2Kqkz65lfCRyj_FfBm4Q3AYLCfc0GzhUudJus8X4FGd54ZxajHrO23piGknlmrfo-791Eepc9YeNTOE8h4JY96OHSkuiyQiK23v0ubXkCREhH55rw_kyo57zax0mpA8YbGsQuIltwRi4z4u18bwrJlEtWuW7QFkDTrRF5HAX1w-dsjApYj0uKTph3RosUMoQAAWfkoeS3pniyyQnGGGw"
 
 
 
@@ -63,7 +64,7 @@ def generate_jwt():
 @app.route('/get_spotify_token', methods=['GET'])
 def get_spotify_token():
     state = security.generate_token(16)
-    scope = 'user-read-private user-read-currently-playing user-read-playback-state'
+    scope = 'user-read-private user-read-currently-playing user-read-playback-state user-modify-playback-state'
     params = urlencode({
             'response_type': 'code',
             'client_id': 'a47c281636bd4a8b907c14495533e837',
@@ -72,8 +73,8 @@ def get_spotify_token():
             'state': state
         })
     
-    redirect_url = 'https://accounts.spotify.com/authorize?' + params        
-    
+    redirect_url = 'https://accounts.spotify.com/authorize?' + params   
+            
     return redirect(redirect_url)
 
 
@@ -135,17 +136,22 @@ def get_songs():
     for song in musics_votes.keys():
          if musics_votes[song]["votes_total"] > 0:
             song_voted[song] = musics_votes[song]
-        
-        
-
+    print(song_voted)        
     return jsonify({"song_voted": song_voted, "user":jwt})
 
 @app.route('/current_track')
 def current_track():
+    global song_in_queue
     # access_token = session['access_token'] 
-    track_name, artist_name, album_img_src, track_lenght, track_progress = spotify.get_current_playing_track(spotify_token)
-    if track_lenght - track_progress < 1:  # 30 seconds before the end
-        spotify.play_next_song(musics_votes)
+    track_id, track_name, artist_name, album_img_src, track_lenght, track_progress = spotify.get_current_playing_track(spotify_token)
+    
+    if song_in_queue == track_id:
+        song_in_queue = ""
+
+    if track_lenght - track_progress < 5000 and song_in_queue == '':  # 1000 mili seconds before the end
+       song_in_queue = spotify.set_next_song(musics_votes, spotify_token, song_in_queue)
+       if song_in_queue:
+            del musics_votes[song_in_queue]
     
     return jsonify({'name': track_name, 'artist': artist_name, 'album_image_src': album_img_src, 'track_lenght': track_lenght, 'track_progress': track_progress})
 
@@ -153,7 +159,6 @@ def current_track():
 
 @app.route('/vote', methods=['POST'])
 def vote():
-    print(musics_votes)
     try:
         # Extract user ID from JWT token
         jwt = session.get("user_token")
@@ -213,20 +218,6 @@ def searching():
     return jsonify({'message': 'Unauthorized access'}), 401
 
 
-@app.route('/queu')
-def queu():
-    try :
-        jwt = session['user_token'] 
-        decoded = security.is_jwt_valid(jwt)
-        if isinstance(decoded, str):
-            # Token is valid, proceed with the route logic
-            return render_template('queu.html')      
-    except Exception as e: 
-            return jsonify({'message': 'An error occurred'}), 500
-    
-    return jsonify({'message': 'Unauthorized access'}), 401
-
-
 
 @app.route('/search', methods=['POST'])
 def search():
@@ -242,9 +233,9 @@ def search():
             musics_votes[song_id]["votes"] = {jwt : {"nb_votes": 0, "max_vote_reached": False}}
             musics_votes[song_id]["votes"][jwt]["nb_votes"]  = 0
             musics_votes[song_id]["votes_total"] = 0
+            musics_votes[song_id]["uri"] = song['uri']
         song['voted'] = has_user_reached_vote_limit(jwt, song_id)
 
-        print(song['voted'], musics_votes)
          
     search_results_template = """
     
@@ -281,6 +272,22 @@ def search():
     rendered_results = render_template_string(search_results_template, songs=songs)
 
     return rendered_results
+
+@app.route('/queu')
+def queu():
+    try :
+        jwt = session['user_token'] 
+        decoded = security.is_jwt_valid(jwt)
+        if isinstance(decoded, str):
+            # Token is valid, proceed with the route logic
+            return render_template('queu.html')      
+    except Exception as e: 
+            return jsonify({'message': 'An error occurred'}), 500
+    
+    return jsonify({'message': 'Unauthorized access'}), 401
+
+
+
 
 def has_user_reached_vote_limit(jwt, song_id):
     if musics_votes[song_id]["votes"][jwt]["max_vote_reached"]:

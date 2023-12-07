@@ -2,14 +2,37 @@ import requests
 import pprint
 
 
-def play_next_song(musics_votes):
+def set_next_song(musics_votes, access_token, song_in_queue):
+   
+
     sorted_songs = sorted(musics_votes.items(), key=lambda x: x[1]['votes_total'], reverse=True)
-    print(sorted_songs)
     if sorted_songs:
+
         next_song_id = sorted_songs[0][0]
-        # Code to play the song using Spotify API
+        song_in_queue = next_song_id
+
+        if sorted_songs[0][1]['votes_total'] != 0:
+            print(f"Puting next song in queu: {sorted_songs[0]}")
+            print(musics_votes[next_song_id])
+            uri = musics_votes[next_song_id]['uri'].replace(":", "%3A")
+            url = f'https://api.spotify.com/v1/me/player/queue?uri={uri}'
+            print(url)
+
+            # Set the authorization header with the access token
+            headers = {
+                'Authorization': f'Bearer {access_token}'
+            }
+            response = requests.post(url, headers=headers)
+            # Code to play the song using Spotify API
+            if response.status_code == 204:
+                return song_in_queue
+            else:
+                
+                print("Failed to set song in queue :" + str(response))
+            
+
         # Update musics_votes to reflect the song has been played
-        print(f"Playing next song: {next_song_id}")
+        
 
 
 def search_song(access_token,query):
@@ -29,6 +52,7 @@ def search_song(access_token,query):
     
     # Extract the relevant information from the response
     tracks = data['tracks']['items'][:5]
+    print(tracks[0])
     return tracks
 
 #    # Print the information of each track
@@ -47,26 +71,19 @@ def get_current_playing_track(access_token):
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
-        pprint.pprint(data['item'])
-
+        track_id = data['item']['id']
         track_name = data['item']['name']
         artist_name = data['item']['album']['artists'][0]['name']
         album_img_src = data['item']['album']['images'][0]['url']
         track_lenght = data['item']['duration_ms']
         track_proress = data['progress_ms']
-
-    
-      
-
         
-        return track_name, artist_name, album_img_src, track_lenght, track_proress
+        return track_id, track_name, artist_name, album_img_src, track_lenght, track_proress
     else:
         # Handle errors or no current playing track
         return response
 
-
-
-
+    
 
 pprint.pprint(get_current_playing_track("BQDJkZe9TuD81ngAYnKvd3inVehSCAqKBaGajGtBAcPXAlgdmfHpfM_bcA5pLJUTRUHNZyJC1cSyoCTpi1XYqkhlXw21imJSgz5Na6gg1mL6hkKfi7reR50N7_Nfkuzm06t3Ktv9MbJVG3oFFP_gGzzpYtpq-rN1uPJVivMGWYDC9pCbS9z3gMm4tDGeRKnJ_HxS6juUK7d0jx2szmq9XJ1Ilh3R"))
 # print(get_access_token("a47c281636bd4a8b907c14495533e837","c86c9093985040b5a6253f3b66d1850a"))

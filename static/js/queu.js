@@ -1,6 +1,4 @@
 
-
-
 function updateQueueDisplay() {
     $.ajax({
         url: '/get_songs',
@@ -8,7 +6,6 @@ function updateQueueDisplay() {
         success: function(response) {            
             const queueContainer = document.querySelector('.queue');
            
-                document.getElementById('empty-queue-message').style.display = 'none';
                 queueContainer.innerHTML = ''; // Clear current queue
                 songs = response.song_voted
                 user = response.user
@@ -16,7 +13,7 @@ function updateQueueDisplay() {
 
                 for (let songId in songs) {
                     let song = songs[songId];
-                    console.log(song);
+                
                     let songVotedLimitReached = song["votes"][user]["max_vote_reached"];                    
                     let songElement = document.createElement('div');
                  
@@ -57,6 +54,7 @@ function fetchQueueUpdates() {
         url: '/get_songs',
         type: 'GET',
         success: function(response) {
+            console.log( "AJAX success, response:", response)
             // Update the queue display with the response
             updateQueueDisplay(response);
         }
@@ -64,4 +62,4 @@ function fetchQueueUpdates() {
 }
 
 // Call fetchQueueUpdates every few seconds
-setInterval(fetchQueueUpdates, 5000); // 5 seconds as an example
+setInterval(fetchQueueUpdates, 5000); // 0.5 seconds as an example
