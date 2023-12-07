@@ -32,11 +32,12 @@ function fetchCurrentTrack() {
             var newTrackName = response.name;  // Ensure this matches your Flask route's response
             var newTrackArtist = response.artist;  // Ensure this matches your Flask route's response
             var newAlbumSource = response.album_image_src;  // Ensure this matches your Flask route's response
+            var trackLenght = response.track_lenght;
+            var trackProgress = response.track_progress;
 
-            if (newTrackName && newTrackName !== lastTrackName) {
-                updateCurrentlyPlaying(newTrackName, newTrackArtist, newAlbumSource);
-                lastTrackName = newTrackName;  // Update the last track name
-            }
+            
+            updateCurrentlyPlaying(newTrackName, newTrackArtist, newAlbumSource, trackLenght, trackProgress);
+            
         },
         error: function() {
             console.log("Error fetching current track.");
@@ -44,17 +45,24 @@ function fetchCurrentTrack() {
     });
 }
 
-function updateCurrentlyPlaying(trackName, artistName, albumImageSrc) {
+function updateCurrentlyPlaying(trackName, artistName, albumImageSrc, trackLenght, trackProgress) {
     var albumCover = document.getElementById('album-cover');
     var trackTitle = document.getElementById('track-title');
-    var trackArtist = document.getElementById('track-artist');
+    var trackArtist = document.getElementById('track-artist'); 
 
+    var progressBar = document.getElementById('song-progress-bar');
+    var percentage = (trackProgress / trackLenght) * 100;
+    console.log(trackLenght)
+    console.log(trackProgress)
+    console.log(percentage)
+
+    progressBar.style.width = percentage + '%';
     albumCover.src = albumImageSrc;
     trackTitle.textContent = trackName;
     trackArtist.textContent = artistName;
 }
 
-setInterval(fetchCurrentTrack, 100000);
+setInterval(fetchCurrentTrack, 1000);
 
 $('#search-form').on('submit', function(e) {
     e.preventDefault();
@@ -74,16 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const songId = event.target.dataset.songid;
             const songName = event.target.dataset.songname;
             const artistName = event.target.dataset.artistname;
-            const songImage = event.target.dataset.songimage;            
+            const songImage = event.target.dataset.songimage;  
+            const songVoted =event.target.dataset.songvoted;          
             console.log('Vote button clicked for song ID:', songId);
-            voteForSong(songId, songName, artistName, songImage);
+            voteForSong(songId, songName, artistName, songImage, songVoted);
         }
     });
 });
     
 
-  
-
+    
 $(document).ready(function() {
     // Initial function calls
 });

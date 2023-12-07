@@ -3,53 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body {
-            font-family: 'Times New Roman', serif; /* Changement de police */
-            background-color: #d3d3d3; /* Couleur de fond plus sombre */
-            margin: 0;
-            padding: 0;
-            scroll-behavior: smooth;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 50px auto;
-            text-align: center;
-            background-color: #f8f8f8; /* Couleur de fond du container plus claire */
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Ombre plus prononcée */
-        }
-
-        h1 {
-            color: #1a1a1a; /* Couleur plus foncée pour le titre */
-        }
-
-        p {
-            color: #404040; /* Couleur de texte plus sombre */
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #4CAF50; /* Changement de la couleur du bouton */
-            color: #fff;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn:hover {
-            background-color: #388E3C; /* Changement de la couleur au survol */
-        }
-
-        .logo {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <title>Music Voting App</title>
 </head>
 <body>
@@ -63,15 +17,17 @@
         </p>
 
         <p>
-            <a href="{{ url_for('voting') }}" class="btn">Start Voting</a>
+            <a href="{{ url_for('search') }}" class="btn">Start Voting</a>
         </p>
     </div>
 
-    <!-- Add more content, sections, and links as needed -->
-
-    <div id="voting-section">
-        <!-- Add content for the voting section here -->
+    <div id="qr-instructions">
+        <h2>Get Started</h2>
+        <p>To vote for your favorite music, simply scan the QR code provided by the pub with your phone's camera.</p>
+        <p>Look for the QR code on your table or ask a staff member for assistance if you can't find it.</p>
+        <p>Once scanned, you'll be directed to the voting page where you can choose the next song to play!</p>
     </div>
+</div>
 
 </body>
 </html>

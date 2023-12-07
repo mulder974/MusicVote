@@ -3,18 +3,21 @@ import security
 from urllib.parse import urlencode
 import requests
 import base64
-from flask import Flask, render_template, render_template_string, request, redirect, session, jsonify
+from flask import Flask, render_template, render_template_string, request, redirect, session, jsonify, url_for
+import security
+import time
 
-
-voted_songs = {}
+musics_votes = {}
 
 
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
+MAX_VOTES_PER_SONG = 1
+spotify_token = "BQAnhKu4Nvld7VPadpze6u-RWDky8vmF5A6WtULaS0QW6OZKcXDzwo4Z1gHSL8vF_bjK_6YDvUcrXr7EZW3BTugzVyWd_EZ2MWqTaq_byKb53HwD6zUAPTGFv3Q6qoan2yIqVEf9jgSD6PUQcR81wXUibAxj8CZ-ZQtkD--xWj_p7X4J4rNXWk84TewbwDZlUMSq0g_S0FzXmn9QjzoJ5w5Cpow2"
 
-# In-memory storage for demonstration purposes
+
 
 
 
@@ -24,31 +27,55 @@ def index():
 
 
 
-@app.route('/current_track')
-def current_track():
-    # access_token = session['access_token'] 
-    track_name, artist_name, album_img_src = spotify.get_current_playing_track("BQCv4QPPlv-80jQI-LYnYjA7RCfZ6gHKQPQnZvRxBCsGgGHz6-3Hyavu-mkpc44MPCZvGe7U5j4mCL22Sody9X3kSet3PcF8e9tCbPfsEu7KCrS-9yRZKRmIMfOBzTAbgmPolKwwkcXvbmUM8ovhntDKNx275ulM8U_imDAwJs_Oa3q5J4sYp76xPc3Ogmd0MKxJ9J8Ji_B0VmNvBZK2xzLLBubc")  
-    
-    return jsonify({'name': track_name, 'artist': artist_name, 'album_image_src': album_img_src})
+@app.route('/generate_jwt')
+def generate_jwt():
+    token = request.args.get('token')
+    #On check si il y a dejà un jwt dans la session de l'user
+    try :
+        jwt = session['user_token'] 
+        jwt = request.headers.get('Authorization')            
+        decoded = security.is_jwt_valid(jwt)
+        if not isinstance(decoded, str):
+            # Token is valid, proceed with the route logic
+            return redirect('queu')      
+        
+    #Sinon on vérifie le token inclue dans le qr code et on génère un nouveau jwt
+        elif security.is_qr_valid(token):
+                jwt = security.generate_jwt(token)
+                session['user_token'] = jwt                
+                return redirect('queu')          
+        else:
+        # Token is invalid
+                return jsonify({'message': decoded}), 401  
+                        
+    except :
+        if security.is_qr_valid(token):
+                jwt = security.generate_jwt(token)
+                session['user_token'] = jwt
+                    # Store token in session
+                return redirect('queu')         
+        else:
+        # Token is invalid
+                return jsonify({'message': decoded}), 401      
+        
+        
 
-
-
-
-@app.route('/login', methods=['GET'])
-def login():
-    state = security.get_random_string(16)
+@app.route('/get_spotify_token', methods=['GET'])
+def get_spotify_token():
+    state = security.generate_token(16)
     scope = 'user-read-private user-read-currently-playing user-read-playback-state'
     params = urlencode({
             'response_type': 'code',
             'client_id': 'a47c281636bd4a8b907c14495533e837',
             'scope': scope,
-            'redirect_uri': 'http://127.0.0.1:5000/callback',
+            'redirect_uri': 'http://192.168.1.95:4000/callback',
             'state': state
         })
     
     redirect_url = 'https://accounts.spotify.com/authorize?' + params        
     
     return redirect(redirect_url)
+
 
 @app.route('/callback')
 def callback():
@@ -62,7 +89,7 @@ def callback():
     # Your Spotify API credentials
     client_id = 'a47c281636bd4a8b907c14495533e837'
     client_secret = 'c86c9093985040b5a6253f3b66d1850a'
-    redirect_uri = 'http://127.0.0.1:5000/callback'
+    redirect_uri = 'http://192.168.1.95:4000/callback'
 
     # Encode Client ID and Secret in Base64
     client_credentials = f"{client_id}:{client_secret}"
@@ -90,35 +117,81 @@ def callback():
         print("Access token : " + access_token)
         session['access_token'] = access_token
 
-        return "Access token received."
+        return f"Access token received : {access_token}"
     else:
         return "Error fetching access token."
 
 
-@app.route('/voting')
-def voting():
-    return render_template('voting.html')
+    
+@app.route('/invalid_token')
+def invalid_token():
+    return "Invalid token. Please scan the QR code to access voting.", 403
+
 
 @app.route('/get_songs')
 def get_songs():
-    return jsonify(voted_songs)
+    jwt = session["user_token"]
+    song_voted = {}
+    for song in musics_votes.keys():
+         if musics_votes[song]["votes_total"] > 0:
+            song_voted[song] = musics_votes[song]
+        
+        
+
+    return jsonify({"song_voted": song_voted, "user":jwt})
+
+@app.route('/current_track')
+def current_track():
+    # access_token = session['access_token'] 
+    track_name, artist_name, album_img_src, track_lenght, track_progress = spotify.get_current_playing_track(spotify_token)
+    if track_lenght - track_progress < 1:  # 30 seconds before the end
+        spotify.play_next_song(musics_votes)
+    
+    return jsonify({'name': track_name, 'artist': artist_name, 'album_image_src': album_img_src, 'track_lenght': track_lenght, 'track_progress': track_progress})
+
+
 
 @app.route('/vote', methods=['POST'])
 def vote():
-    data = request.get_json()
-    
-    song_id = data.get('song_id')
-    
-    if song_id in voted_songs:
-        voted_songs[song_id]["votes"] += 1
+    print(musics_votes)
+    try:
+        # Extract user ID from JWT token
+        jwt = session.get("user_token")
+        if not jwt:
+            return jsonify({'message': 'Unauthorized access'}), 401
 
-    else:
-        voted_songs[song_id] = {}
-        voted_songs[song_id]["votes"] = 1
-        voted_songs[song_id]["name"] = data.get('song_name')
-        voted_songs[song_id]["artist_name"] = data.get('artist_name')
-        voted_songs[song_id]["song_image"] = data.get('song_image')
-    return jsonify(success=True)
+        decoded = security.is_jwt_valid(jwt)
+        if not isinstance(decoded, str):
+            return jsonify({'message': 'Invalid token'}), 401
+
+        data = request.get_json()
+        song_id = data.get('song_id')
+        if not song_id:
+            return jsonify({'message': 'Missing song ID'}), 400
+        
+        song_vote_info = musics_votes[song_id]
+
+        song_vote_info["votes_total"] += 1
+        # Increment the vote count for the current user
+        song_vote_info["votes"][jwt]["nb_votes"] += 1
+        if song_vote_info["votes"][jwt]["nb_votes"] >= MAX_VOTES_PER_SONG:
+            song_vote_info["votes"][jwt]["max_vote_reached"] = True
+             
+            
+        song_vote_info["name"] = data.get('song_name')
+        song_vote_info["artist_name"] = data.get('artist_name')
+        song_vote_info["song_image"] = data.get('song_image')
+        
+
+        return jsonify(success=True)
+
+    except Exception as e:
+        # Log the exception for debugging purposes
+        print(f"Error in vote route: {e}")
+        return jsonify({'message': 'An error occurred processing your vote'}), 500
+
+
+
     
     # # Fetch the song data. You need to replace this with your actual song fetching logic.
     # song = get_song_by_id(song_id)
@@ -128,125 +201,94 @@ def vote():
 
 @app.route('/searching')
 def searching():
-    return render_template('search.html')
+    try :
+        jwt = session['user_token'] 
+        decoded = security.is_jwt_valid(jwt)
+        if isinstance(decoded, str):
+            # Token is valid, proceed with the route logic
+            return render_template('search.html')      
+    except Exception as e: 
+            return jsonify({'message': 'An error occurred'}), 500
+    
+    return jsonify({'message': 'Unauthorized access'}), 401
 
 
 @app.route('/queu')
 def queu():
-    return render_template('queu.html')
+    try :
+        jwt = session['user_token'] 
+        decoded = security.is_jwt_valid(jwt)
+        if isinstance(decoded, str):
+            # Token is valid, proceed with the route logic
+            return render_template('queu.html')      
+    except Exception as e: 
+            return jsonify({'message': 'An error occurred'}), 500
+    
+    return jsonify({'message': 'Unauthorized access'}), 401
 
 
 
 @app.route('/search', methods=['POST'])
 def search():
+    jwt = session['user_token'] 
     query = request.form.get('query')
+    songs = spotify.search_song(spotify_token, query)
 
-    songs = spotify.search_song("BQCv4QPPlv-80jQI-LYnYjA7RCfZ6gHKQPQnZvRxBCsGgGHz6-3Hyavu-mkpc44MPCZvGe7U5j4mCL22Sody9X3kSet3PcF8e9tCbPfsEu7KCrS-9yRZKRmIMfOBzTAbgmPolKwwkcXvbmUM8ovhntDKNx275ulM8U_imDAwJs_Oa3q5J4sYp76xPc3Ogmd0MKxJ9J8Ji_B0VmNvBZK2xzLLBubc", query)
-    
+    for song in songs: 
+
+        song_id = song['id']
+        if song_id not in musics_votes.keys():
+            musics_votes[song_id] = {}
+            musics_votes[song_id]["votes"] = {jwt : {"nb_votes": 0, "max_vote_reached": False}}
+            musics_votes[song_id]["votes"][jwt]["nb_votes"]  = 0
+            musics_votes[song_id]["votes_total"] = 0
+        song['voted'] = has_user_reached_vote_limit(jwt, song_id)
+
+        print(song['voted'], musics_votes)
+         
     search_results_template = """
-    <style>
-     .container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f8f8f8;
-}
-
-h2 {
-    font-size: 24px;
-    text-align: center;
-    color: #333;
-    margin-bottom: 20px;
-}
-
-.songs-list {
-    list-style-type: none;
-    padding: 0;
-}
-
-.song-card {
-    display: flex;
-    align-items: center;
-    background-color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    margin-bottom: 20px;
-    padding: 15px;
-    transition: transform 0.3s ease;
-}
-
-.song-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.album-cover {
-    width: 60px; /* Adjust size as needed */
-    height: 60px;
-    border-radius: 30px; /* Makes it circular */
-    object-fit: cover;
-    margin-right: 15px;
-}
-
-.song-info {
-    flex-grow: 1;
-}
-
-.song-name {
-    font-size: 18px;
-    margin: 0;
-    color: #333;
-}
-
-.song-artist {
-    font-size: 14px;
-    color: #666;
-}
-
-.vote-button {
-    background-color: #9a191dcd;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 20px; /* Pill shape */
-    text-transform: uppercase;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.vote-button:hover {
-    background-color: #831519cd
-}
-
-
-    </style>
+    
     <div class="container">
     <h2>Search Results</h2>
     <ul class="songs-list">
         {% for song in songs %}
-        <li class="song-card">
-            <img class="album-cover" src="{{ song['album']['images'][2]['url'] }}" alt="Album Cover">
-            <div class="song-info">
-                <h3 class="song-name">{{ song['name'] }}</h3>
-                <p class="song-artist">{{ song['album']['artists'][0]['name'] }}</p>
-            </div>
-            <button class="vote-button" 
-                    data-songId="{{ song['id'] }}" 
-                    data-songName="{{ song['name'] }}" 
-                    data-artistName="{{ song['album']['artists'][0]['name'] }}"
-                    data-songImage = "{{ song['album']['images'][2]['url'] }}" 
-                    >Voter !</button>
-        </li>
-        {% endfor %}
+    <li class="song-card">
+        <img class="album-cover" src="{{ song['album']['images'][2]['url'] }}" alt="Album Cover">
+        <div class="song-info">
+            <h3 class="song-name">{{ song['name'] }}</h3>
+            <p class="song-artist">{{ song['album']['artists'][0]['name'] }}</p>
+        </div>
+        <button class="vote-button" 
+                data-songId="{{ song['id'] }}" 
+                data-songName="{{ song['name'] }}" 
+                data-artistName="{{ song['album']['artists'][0]['name'] }}"
+                data-songImage="{{ song['album']['images'][2]['url'] }}"
+                data-songVoted="{{ song['voted'] }}"
+                {% if song['voted'] %}disabled{% endif %}>
+                {% if song['voted'] %}
+        <i class="icon-limited-votes"></i> Max vote atteint
+    {% else %}
+        <i class="icon-vote"></i> Vote
+    {% endif %}
+                </button>
+    </li>
+{% endfor %}
     </ul>
 </div>
     """
+    
     
     rendered_results = render_template_string(search_results_template, songs=songs)
 
     return rendered_results
 
+def has_user_reached_vote_limit(jwt, song_id):
+    if musics_votes[song_id]["votes"][jwt]["max_vote_reached"]:
+        return True
+    else:
+        return False
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port = 7000)
 

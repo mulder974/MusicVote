@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <meta charset="UTF-8">
@@ -14,24 +16,29 @@
     
     <div class="queue-container">
         <header>
-            <h1>O'Sully'S</h1>
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="O'Sully's Logo" class="logo">
             <h2>File d'attente</h2>
         </header>
         <!-- Inside the queue container, add a placeholder for the empty message -->
     <div class="queue">
-    <div id="empty-queue-message" class="empty-queue-message">
-        <p>Aucun vote n'a été effectué, Choisissez votre son favori dans l'onglet "rechercher"</p>
+        <div id="empty-queue-message" class="empty-queue-message">
+            <p>Aucun vote n'a été effectué, Choisissez votre son favori dans l'onglet "rechercher"</p>
+        </div>
     </div>
     <!-- Song entries will be inserted here by JavaScript -->
-    </div>
-        <div class="now-playing-bar">
-            <img src="" alt="Album Cover" id="album-cover" class="now-playing-cover">
+    <div class="now-playing-bar">
+        <img src="" alt="Album Cover" id="album-cover" class="now-playing-cover">
+    
+        <div class="now-playing-content">
             <div class="now-playing-info">
                 <span id="track-title" class="now-playing-title">Song Title</span>
                 <span id="track-artist" class="now-playing-artist">Artist Name</span>
             </div>
-                <!-- Optionally, add controls like play/pause buttons -->
-            </div>   
+        
+            <div class="progress-container">
+                <div class="progress-bar" id="song-progress-bar"></div>
+            </div> 
+        </div>  
     </div>
     <footer>
             

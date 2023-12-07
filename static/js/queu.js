@@ -1,35 +1,6 @@
 
 
 
-function fetchCurrentTrack() {
-    console.log("fetchCurrentTrack called");
-    $.ajax({
-        url: '/current_track',
-        type: 'GET',
-        success: function(response) {
-            console.log("AJAX success, response:", response);
-            var newTrackName = response.name;  // Assuming response contains track_id
-            var newTrackArtist = response.artist;
-            var newAlbumSource = response.album_image_src;
-            
-            
-
-            // Update the iframe only if the track ID has changed
-            if (newTrackName && newTrackName !== lastTrackName) {
-                updateCurrentlyPlaying(newTrackName,newTrackArtist,newAlbumSource);
-                lastTrackName = newTrackName;  // Update the last track ID
-            }
-        },
-        error: function() {
-            console.log("Error fetching current track.");
-        }
-    });
-}
-
-
-setInterval(fetchCurrentTrack, 10000);
-
-
 function updateQueueDisplay() {
     $.ajax({
         url: '/get_songs',
@@ -39,95 +10,36 @@ function updateQueueDisplay() {
            
                 document.getElementById('empty-queue-message').style.display = 'none';
                 queueContainer.innerHTML = ''; // Clear current queue
+                songs = response.song_voted
+                user = response.user
+            
 
-                for (let songId in response) {
-                    let song = response[songId];
-                    let songElement = document.createElement('div');
+                for (let songId in songs) {
+                    let song = songs[songId];
                     console.log(song);
+                    let songVotedLimitReached = song["votes"][user]["max_vote_reached"];                    
+                    let songElement = document.createElement('div');
+                 
+
+                    let vote = song["votes_total"];
+                   
+                    
+
                     songElement.className = 'song-card';
                     songElement.innerHTML = `
-                    <style>
-                    .container {
-                   max-width: 600px;
-                   margin: 0 auto;
-                   padding: 20px;
-                   background-color: #f8f8f8;
-               }
-               
-               h2 {
-                   font-size: 24px;
-                   text-align: center;
-                   color: #333;
-                   margin-bottom: 20px;
-               }
-               
-               .songs-list {
-                   list-style-type: none;
-                   padding: 0;
-               }
-               
-               .song-card {
-                   display: flex;
-                   align-items: center;
-                   background-color: #ffffff;
-                   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                   border-radius: 8px;
-                   margin-bottom: 20px;
-                   padding: 15px;
-                   transition: transform 0.3s ease;
-               }
-               
-               .song-card:hover {
-                   transform: translateY(-3px);
-                   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-               }
-               
-               .album-cover {
-                   width: 60px; /* Adjust size as needed */
-                   height: 60px;
-                   border-radius: 30px; /* Makes it circular */
-                   object-fit: cover;
-                   margin-right: 15px;
-               }
-               
-               .song-info {
-                   flex-grow: 1;
-               }
-               
-               .song-name {
-                   font-size: 18px;
-                   margin: 0;
-                   color: #333;
-               }
-               
-               .song-artist {
-                   font-size: 14px;
-                   color: #666;
-               }
-               
-               .vote-button {
-                   background-color: #9a191dcd;
-                   color: white;
-                   border: none;
-                   padding: 10px 20px;
-                   border-radius: 20px; /* Pill shape */
-                   text-transform: uppercase;
-                   font-weight: bold;
-                   cursor: pointer;
-                   transition: background-color 0.3s ease;
-               }
-               
-               .vote-button:hover {
-                   background-color: #831519cd
-               }
-               
-               
-                   </style>
                         <img class="album-cover" src="${song.song_image}" alt="Album Cover">
                         <div class="song-info">
                             <h3 class="song-name">${song.name}</h3>
                             <p class="song-artist">${song.artist_name}</p>
-                            <p>Votes: ${song.votes}</p>
+                            <p>Votes: ${vote}</p>
+                            <button class="vote-button" 
+                            data-songId="{{ song['id'] }}"
+                            onclick="voteForSong('${songId}')"
+                            ${songVotedLimitReached ? 'disabled' : true}>
+                            ${songVotedLimitReached 
+                            ? '<i class="icon-limited-votes"></i> Max vote atteint' 
+                            : '<i class="icon-vote"></i> Vote'}                      
+                            </button>
                         </div>
                     `;
                     queueContainer.appendChild(songElement);

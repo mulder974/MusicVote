@@ -2,28 +2,39 @@
 <html lang="en">
 <head>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 </head>
 <body>
+<div class="content-wrapper">
     <header>
-        <h1>O'Sully'S</h1>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="O'Sully's Logo" class="logo">
     </header>
 <form id="search-form">
     <input type="text" id="search-input" placeholder="Enter a song name" oninput="handleSearchInput()" aria-label="Search for a song">
 </form>
 <div id="search-results-container"></div>
-</div>
+
 
 <div class="now-playing-bar">
     <img src="" alt="Album Cover" id="album-cover" class="now-playing-cover">
-    <div class="now-playing-info">
-        <span id="track-title" class="now-playing-title">Song Title</span>
-        <span id="track-artist" class="now-playing-artist">Artist Name</span>
-    </div>
-        <!-- Optionally, add controls like play/pause buttons -->
-    </div>   
+    <div class="now-playing-content">
+        <div class="now-playing-info">
+            <span id="track-title" class="now-playing-title">Song Title</span>
+            <span id="track-artist" class="now-playing-artist">Artist Name</span>
+        </div>
+    
+        <div class="progress-container">
+            <div class="progress-bar" id="song-progress-bar"></div>
+        </div> 
+    </div>  
 </div>
+
+</body>
+</div>
+
+
 <footer>
             
     <nav>
@@ -44,5 +55,4 @@
 <script src="{{ url_for('static', filename='js/vote.js') }}"></script>
 <script src="{{ url_for('static', filename='js/search.js') }}"></script>
 
-</body>
 </html>
