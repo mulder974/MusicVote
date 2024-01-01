@@ -2,9 +2,7 @@ import requests
 import pprint
 
 
-def set_next_song(musics_votes, access_token, song_in_queue):
-   
-
+def set_next_song(musics_votes, access_token, song_in_queue):   
     sorted_songs = sorted(musics_votes.items(), key=lambda x: x[1]['votes_total'], reverse=True)
     if sorted_songs:
 

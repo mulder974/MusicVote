@@ -5,6 +5,7 @@
 <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,8 +56,8 @@
     </nav>
 </footer>
     
-<script src="{{ url_for('static', filename='js/queu.js') }}"></script>
-<script src="{{ url_for('static', filename='js/vote.js') }}"></script>
-<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+<script src="{{ url_for('static', filename='/assets/js/queue.js') }}"></script>
+<script src="{{ url_for('static', filename='/assets/js/vote.js') }}"></script>
+<script src="{{ url_for('static', filename='/assets/js/search.js') }}"></script>
 </body>
 </html>

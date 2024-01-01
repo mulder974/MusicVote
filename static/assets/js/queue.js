@@ -1,9 +1,17 @@
+var socket = io.connect('http://' + document.location.hostname + ':' + location.port);
 
-function updateQueueDisplay() {
-    $.ajax({
-        url: '/get_songs',
-        type: 'GET',
-        success: function(response) {            
+socket.on('connect', function() {
+    console.log('Connected to WebSocket');
+});
+
+socket.on('queue_update', function(data) {
+    console.log('Track update received:', data);
+    updateQueueDisplay(data.name, data.artist, data.album_image_src, data.track_length, data.track_progress);
+});
+
+
+function updateQueueDisplay(response) {
+               
             const queueContainer = document.querySelector('.queue');
            
                 queueContainer.innerHTML = ''; // Clear current queue
@@ -42,12 +50,11 @@ function updateQueueDisplay() {
                     queueContainer.appendChild(songElement);
                 }
             
-        },
-        error: function(error) {
-            console.error('Error fetching song data:', error);
         }
-    });
-}
+       
+
+
+
 
 function fetchQueueUpdates() {
     $.ajax({

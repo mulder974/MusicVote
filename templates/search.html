@@ -4,6 +4,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+
+
 
 </head>
 <body>
@@ -39,7 +42,7 @@
             
     <nav>
         <ul>
-            <li><a href="/queu">File d'attente</a></li>
+            <li><a href="/queue">File d'attente</a></li>
             <li class="active"><a href="/searching">Rechercher</a></li>
             <li><a href="#info">Info</a></li>
         </ul>
@@ -52,7 +55,7 @@
 </nav>
 </footer>
 
-<script src="{{ url_for('static', filename='js/vote.js') }}"></script>
-<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+<script src="{{ url_for('static', filename='/assets/js/vote.js') }}"></script>
+<script src="{{ url_for('static', filename='/assets/js/search.js') }}"></script>
 
 </html>

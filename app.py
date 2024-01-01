@@ -6,19 +6,26 @@ import base64
 from flask import Flask, render_template, render_template_string, request, redirect, session, jsonify, url_for
 import security
 import time
+from flask_socketio import SocketIO
 
+
+global musics_votes 
 musics_votes = {}
 song_in_queue = ""
 
 
 
 app = Flask(__name__)
+socketio = SocketIO(app)
+
 app.secret_key = 'your_secret_key'
 
 MAX_VOTES_PER_SONG = 1
-spotify_token = "BQDS57w4jO44YVBKTz85Bx7hKyJJwTZF7kUWXrae82icOagy6t0rxcpNMRsGc7vXvKE-6RB97kOYV4ApAmAhEw75jwSoNVSfbfq5YiJfqWPx0Kqg7xcNQEVKRirGsfIAMEmvpsd0sAd_jyoclZdWcfoQQgpS9TVh2yfGxMCyn3zKccZmltFJ0pmakJXRpa1CGnTRbTL-8t6ax8eVEh9hkzbjei-VUw"
+spotify_token = "BQCRqLasYpRvGaUyt1CJgO43uRrS2Bf0iPGhCeavCv9WxPJs8lxrFKMYPSXVx7ceUX-7NwXa_niXAjEmqYvXNcL_l2Kr1s_UQmuaXDdMFnQVK1DzPo1dhVpp5InX6W1HiLz7smEMA--A5zcEu6LtJnhUPY8mFYUzC0ZnJhyHxjGGBJ6asqBLLV_Stwcf7UqV-vfau-j3MPixKL7rrM-4IEnd1yvHBA"
 
 
+
+#==================HTML ROUTE=========================#
 
 
 
@@ -27,56 +34,33 @@ def index():
     return render_template('index.html')
 
 
-
-@app.route('/generate_jwt')
-def generate_jwt():
-    token = request.args.get('token')
-    #On check si il y a dejà un jwt dans la session de l'user
+@app.route('/searching')
+def searching():
     try :
         jwt = session['user_token'] 
-        jwt = request.headers.get('Authorization')            
         decoded = security.is_jwt_valid(jwt)
-        if not isinstance(decoded, str):
+        if isinstance(decoded, str):
             # Token is valid, proceed with the route logic
-            return redirect('queu')      
-        
-    #Sinon on vérifie le token inclue dans le qr code et on génère un nouveau jwt
-        elif security.is_qr_valid(token):
-                jwt = security.generate_jwt(token)
-                session['user_token'] = jwt                
-                return redirect('queu')          
-        else:
-        # Token is invalid
-                return jsonify({'message': decoded}), 401  
-                        
-    except :
-        if security.is_qr_valid(token):
-                jwt = security.generate_jwt(token)
-                session['user_token'] = jwt
-                    # Store token in session
-                return redirect('queu')         
-        else:
-        # Token is invalid
-                return jsonify({'message': decoded}), 401      
-        
-        
-
-@app.route('/get_spotify_token', methods=['GET'])
-def get_spotify_token():
-    state = security.generate_token(16)
-    scope = 'user-read-private user-read-currently-playing user-read-playback-state user-modify-playback-state'
-    params = urlencode({
-            'response_type': 'code',
-            'client_id': 'a47c281636bd4a8b907c14495533e837',
-            'scope': scope,
-            'redirect_uri': 'http://192.168.1.95:4000/callback',
-            'state': state
-        })
+            return render_template('search.html')      
+    except Exception as e: 
+            print(e)
+            return jsonify({'message': 'An error occurred'}), 500
     
-    redirect_url = 'https://accounts.spotify.com/authorize?' + params   
-            
-    return redirect(redirect_url)
+    return jsonify({'message': 'Unauthorized access'}), 401
 
+
+@app.route('/queue')
+def queue():
+    try :
+        jwt = session['user_token'] 
+        decoded = security.is_jwt_valid(jwt)
+        if isinstance(decoded, str):
+            # Token is valid, proceed with the route logic
+            return render_template('queue.html')      
+    except Exception as e: 
+            return jsonify({'message': 'An error occurred'}), 500
+    
+    return jsonify({'message': 'Unauthorized access'}), 401
 
 @app.route('/callback')
 def callback():
@@ -123,11 +107,69 @@ def callback():
         return "Error fetching access token."
 
 
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
+
+#================== TOKENS =========================#
+
+
+@app.route('/generate_jwt')
+def generate_jwt(   ):
+    token = request.args.get('token')
+    #On check si il y a dejà un jwt dans la session de l'user
+    try :
+        jwt = session['user_token'] 
+        jwt = request.headers.get('Authorization')            
+        decoded = security.is_jwt_valid(jwt)
+        if not isinstance(decoded, str):
+            # Token is valid, proceed with the route logic
+            return redirect('queu')      
+        
+    #Sinon on vérifie le token inclue dans le qr code et on génère un nouveau jwt
+        elif security.is_qr_valid(token):
+                jwt = security.generate_jwt(token)
+                session['user_token'] = jwt                
+                return redirect('queue')          
+        else:
+        # Token is invalid
+                return jsonify({'message': decoded}), 401  
+                        
+    except :
+        if security.is_qr_valid(token):
+                jwt = security.generate_jwt(token)
+                session['user_token'] = jwt
+                    # Store token in session
+                return redirect('queue')         
+        else:
+        # Token is invalid
+                return jsonify({'message': decoded}), 401      
+        
+        
+
+@app.route('/get_spotify_token', methods=['GET'])
+def get_spotify_token():
+    state = security.generate_token(16)
+    scope = 'user-read-private user-read-currently-playing user-read-playback-state user-modify-playback-state'
+    params = urlencode({
+            'response_type': 'code',
+            'client_id': 'a47c281636bd4a8b907c14495533e837',
+            'scope': scope,
+            'redirect_uri': 'http://192.168.1.95:4000/callback',
+            'state': state
+        })
     
+    redirect_url = 'https://accounts.spotify.com/authorize?' + params   
+            
+    return redirect(redirect_url)
+
+
 @app.route('/invalid_token')
 def invalid_token():
     return "Invalid token. Please scan the QR code to access voting.", 403
 
+
+#==================LOGIC ROUTE=========================#
 
 @app.route('/get_songs')
 def get_songs():
@@ -136,7 +178,7 @@ def get_songs():
     for song in musics_votes.keys():
          if musics_votes[song]["votes_total"] > 0:
             song_voted[song] = musics_votes[song]
-    print(song_voted)        
+    socketio.emit('song_voted', song_voted)        
     return jsonify({"song_voted": song_voted, "user":jwt})
 
 @app.route('/current_track')
@@ -153,7 +195,17 @@ def current_track():
        if song_in_queue:
             del musics_votes[song_in_queue]
     
-    return jsonify({'name': track_name, 'artist': artist_name, 'album_image_src': album_img_src, 'track_lenght': track_lenght, 'track_progress': track_progress})
+    track_info = {
+        'name': track_name,
+        'artist': artist_name,
+        'album_image_src': album_img_src,
+        'track_length': track_lenght,
+        'track_progress': track_progress
+    }
+
+    socketio.emit('track_update', track_info)
+    
+    return jsonify(track_info)
 
 
 
@@ -203,20 +255,6 @@ def vote():
     # song['votes'] = votes[song_id]
 
     # return jsonify(success=True, song=song)
-
-@app.route('/searching')
-def searching():
-    try :
-        jwt = session['user_token'] 
-        decoded = security.is_jwt_valid(jwt)
-        if isinstance(decoded, str):
-            # Token is valid, proceed with the route logic
-            return render_template('search.html')      
-    except Exception as e: 
-            return jsonify({'message': 'An error occurred'}), 500
-    
-    return jsonify({'message': 'Unauthorized access'}), 401
-
 
 
 @app.route('/search', methods=['POST'])
@@ -273,21 +311,6 @@ def search():
 
     return rendered_results
 
-@app.route('/queu')
-def queu():
-    try :
-        jwt = session['user_token'] 
-        decoded = security.is_jwt_valid(jwt)
-        if isinstance(decoded, str):
-            # Token is valid, proceed with the route logic
-            return render_template('queu.html')      
-    except Exception as e: 
-            return jsonify({'message': 'An error occurred'}), 500
-    
-    return jsonify({'message': 'Unauthorized access'}), 401
-
-
-
 
 def has_user_reached_vote_limit(jwt, song_id):
     if musics_votes[song_id]["votes"][jwt]["max_vote_reached"]:
@@ -296,6 +319,16 @@ def has_user_reached_vote_limit(jwt, song_id):
         return False
 
 
+#==================WEB SOCKETS=========================#
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
+
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port = 7000)
+    socketio.run(debug=True, host='0.0.0.0', port = 7000)
 

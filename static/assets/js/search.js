@@ -1,8 +1,16 @@
 
-let debounceTimeout;
-let lastTrackName = null;  // Declare this variable outside of your function
+let lastTrackName = null;  
 
+var socket = io.connect('http://' + document.domain + ':' + location.port);
 
+socket.on('connect', function() {
+    console.log('Connected to WebSocket');
+});
+
+socket.on('track_update', function(data) {
+    console.log('Track update received:', data);
+    updateCurrentlyPlaying(data.name, data.artist, data.album_image_src, data.track_length, data.track_progress);
+});
 
 function handleSearchInput() {
     var query = $('#search-input').val();
@@ -28,16 +36,7 @@ function fetchCurrentTrack() {
         url: '/current_track',
         type: 'GET',
         success: function(response) {
-            console.log("AJAX success, response:", response);
-            var newTrackName = response.name;  // Ensure this matches your Flask route's response
-            var newTrackArtist = response.artist;  // Ensure this matches your Flask route's response
-            var newAlbumSource = response.album_image_src;  // Ensure this matches your Flask route's response
-            var trackLenght = response.track_lenght;
-            var trackProgress = response.track_progress;
-
-            
-            updateCurrentlyPlaying(newTrackName, newTrackArtist, newAlbumSource, trackLenght, trackProgress);
-            
+            console.log("AJAX success, response:", response);            
         },
         error: function() {
             console.log("Error fetching current track.");
@@ -62,7 +61,6 @@ function updateCurrentlyPlaying(trackName, artistName, albumImageSrc, trackLengh
     trackArtist.textContent = artistName;
 }
 
-setInterval(fetchCurrentTrack, 1000);
 
 $('#search-form').on('submit', function(e) {
     e.preventDefault();
@@ -95,3 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
 $(document).ready(function() {
     // Initial function calls
 });
+
+
+$('#search-form').on('submit', function(e) {
+    e.preventDefault();
+    handleSearchInput();
+});
+
+fetchCurrentTrack();
+
+setInterval(fetchCurrentTrack, 1000);
