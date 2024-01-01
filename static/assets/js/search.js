@@ -51,9 +51,7 @@ function updateCurrentlyPlaying(trackName, artistName, albumImageSrc, trackLengh
 
     var progressBar = document.getElementById('song-progress-bar');
     var percentage = (trackProgress / trackLenght) * 100;
-    console.log(trackLenght)
-    console.log(trackProgress)
-    console.log(percentage)
+    
 
     progressBar.style.width = percentage + '%';
     albumCover.src = albumImageSrc;

@@ -4,69 +4,70 @@ socket.on('connect', function() {
     console.log('Connected to WebSocket');
 });
 
-socket.on('queue_update', function(data) {
-    console.log('Track update received:', data);
-    updateQueueDisplay(data.name, data.artist, data.album_image_src, data.track_length, data.track_progress);
+
+socket.on('vote_processed', function(data) {
+    console.log(data.message);
+    fetchQueueUpdates();
 });
 
+socket.on('song_changed', function(data) {
+    console.log(data.message);
+    fetchQueueUpdates();
+});
 
-function updateQueueDisplay(response) {
-               
-            const queueContainer = document.querySelector('.queue');
-           
-                queueContainer.innerHTML = ''; // Clear current queue
-                songs = response.song_voted
-                user = response.user
-            
+function updateQueueDisplay(data) {
+    const queueContainer = document.querySelector('.queue');
+    queueContainer.innerHTML = ''; // Clear current queue
 
-                for (let songId in songs) {
-                    let song = songs[songId];
-                
-                    let songVotedLimitReached = song["votes"][user]["max_vote_reached"];                    
-                    let songElement = document.createElement('div');
-                 
+    let songs = data.song_voted;
+    let user = data.user;
 
-                    let vote = song["votes_total"];
-                   
-                    
+    // Convert songs to an array and sort by votes_total
+    let sortedSongs = Object.entries(songs).sort((a, b) => {
+        return b[1].votes_total - a[1].votes_total;
+    });
 
-                    songElement.className = 'song-card';
-                    songElement.innerHTML = `
-                        <img class="album-cover" src="${song.song_image}" alt="Album Cover">
-                        <div class="song-info">
-                            <h3 class="song-name">${song.name}</h3>
-                            <p class="song-artist">${song.artist_name}</p>
-                            <p>Votes: ${vote}</p>
-                            <button class="vote-button" 
-                            data-songId="{{ song['id'] }}"
-                            onclick="voteForSong('${songId}')"
-                            ${songVotedLimitReached ? 'disabled' : true}>
-                            ${songVotedLimitReached 
-                            ? '<i class="icon-limited-votes"></i> Max vote atteint' 
-                            : '<i class="icon-vote"></i> Vote'}                      
-                            </button>
-                        </div>
-                    `;
-                    queueContainer.appendChild(songElement);
-                }
-            
-        }
+    sortedSongs.forEach(([songId, song]) => {
+        let songVotedLimitReached = song["votes"][user]["max_vote_reached"];
+        let songElement = document.createElement('div');
+        songElement.className = 'song-card';
+        songElement.innerHTML = `
+            <img class="album-cover" src="${song.song_image}" alt="Album Cover">
+            <div class="song-info">
+                <h3 class="song-name">${song.name}</h3>
+                <p class="song-artist">${song.artist_name}</p>
+                <p>Votes: ${song.votes_total}</p>
+                <button class="vote-button" 
+                data-songId="${songId}"
+                onclick="voteForSong('${songId}')"
+                ${songVotedLimitReached ? 'disabled' : ''}>
+                ${songVotedLimitReached 
+                ? '<i class="icon-limited-votes"></i> Max vote atteint' 
+                : '<i class="icon-vote"></i> Vote'}                      
+                </button>
+            </div>
+        `;
+        queueContainer.appendChild(songElement);
+    });
+}
        
 
 
 
 
 function fetchQueueUpdates() {
+    console.log( "trying to fetch queue updates...");
+
     $.ajax({
         url: '/get_songs',
         type: 'GET',
         success: function(response) {
-            console.log( "AJAX success, response:", response)
+            console.log( "AJAX success, response:", response);
             // Update the queue display with the response
             updateQueueDisplay(response);
         }
     });
 }
 
+fetchQueueUpdates();
 // Call fetchQueueUpdates every few seconds
-setInterval(fetchQueueUpdates, 5000); // 0.5 seconds as an example

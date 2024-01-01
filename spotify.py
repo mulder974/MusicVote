@@ -2,7 +2,7 @@ import requests
 import pprint
 
 
-def set_next_song(musics_votes, access_token, song_in_queue):   
+def set_next_song(musics_votes, access_token):   
     sorted_songs = sorted(musics_votes.items(), key=lambda x: x[1]['votes_total'], reverse=True)
     if sorted_songs:
 
@@ -10,7 +10,7 @@ def set_next_song(musics_votes, access_token, song_in_queue):
         song_in_queue = next_song_id
 
         if sorted_songs[0][1]['votes_total'] != 0:
-            print(f"Puting next song in queu: {sorted_songs[0]}")
+            print(f"Playing next song in queu: {sorted_songs[0]}")
             print(musics_votes[next_song_id])
             uri = musics_votes[next_song_id]['uri'].replace(":", "%3A")
             url = f'https://api.spotify.com/v1/me/player/queue?uri={uri}'

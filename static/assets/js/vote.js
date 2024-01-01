@@ -17,6 +17,8 @@ function voteForSong(songId, songName, artistName, songImage, songVoted) {
                   voteButton.dataset.songvoted = 'False';
               }
           } else {
+              // There was an error processing your vote
+              console.log(response)
               alert('There was an error processing your vote.');
           }
       },

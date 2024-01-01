@@ -7,26 +7,46 @@ from flask import Flask, render_template, render_template_string, request, redir
 import security
 import time
 from flask_socketio import SocketIO
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 
 
+#Variables
 global musics_votes 
 musics_votes = {}
-song_in_queue = ""
+next_song = ""
+MAX_VOTES_PER_SONG = 1
+spotify_token = "BQDKZqqp_h6F3PxK9pAj7aF4m5ThiryiYD_Jyjyg9UJcV-MdZH3SFusEIWyZzHUjpT1iMoH5f2iwWYzv-O0wQHIt8mHHBe7CunDPNbw4Mhuc9QtKeu7mbMjfIO3bQYvJeKR4e7QHR7j1MfQtk-AEvdxqz-T7Mr6OPMhRjZ7KQmnhg_aeE7k1wYxIjLyPaJARE3m5kBsTKZW9hhbDfuavlPBJc9XCeQ"
 
-
-
+#Login manager
+host = 'http://192.168.1.95'
 app = Flask(__name__)
 socketio = SocketIO(app)
-
 app.secret_key = 'your_secret_key'
 
-MAX_VOTES_PER_SONG = 1
-spotify_token = "BQCRqLasYpRvGaUyt1CJgO43uRrS2Bf0iPGhCeavCv9WxPJs8lxrFKMYPSXVx7ceUX-7NwXa_niXAjEmqYvXNcL_l2Kr1s_UQmuaXDdMFnQVK1DzPo1dhVpp5InX6W1HiLz7smEMA--A5zcEu6LtJnhUPY8mFYUzC0ZnJhyHxjGGBJ6asqBLLV_Stwcf7UqV-vfau-j3MPixKL7rrM-4IEnd1yvHBA"
+#Login manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+
+
+# User class
+class User(UserMixin):
+    def __init__(self, username):
+        self.id = username
+
+# User loader
+@login_manager.user_loader
+def load_user(id):
+    return User(id)
+
+
+
+
 
 
 
 #==================HTML ROUTE=========================#
-
 
 
 @app.route('/')
@@ -74,7 +94,8 @@ def callback():
     # Your Spotify API credentials
     client_id = 'a47c281636bd4a8b907c14495533e837'
     client_secret = 'c86c9093985040b5a6253f3b66d1850a'
-    redirect_uri = 'http://192.168.1.95:4000/callback'
+    redirect_uri = host + ':4000/callback'
+
 
     # Encode Client ID and Secret in Base64
     client_credentials = f"{client_id}:{client_secret}"
@@ -107,9 +128,34 @@ def callback():
         return "Error fetching access token."
 
 
-@app.route('/admin')
-def admin():
-    return render_template('admin.html')
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('admin/dashboard.html')
+
+#================== Log routes =========================#
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        print(username, password)
+        security.good_credentials(username,password)
+        
+        if security.good_credentials(username,password):
+            login_user(User(username))
+            return redirect(url_for('dashboard'))
+        else:
+            return 'Invalid username or password'
+
+    return render_template('admin/login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return 'Logged out successfully.'
 
 #================== TOKENS =========================#
 
@@ -124,7 +170,7 @@ def generate_jwt(   ):
         decoded = security.is_jwt_valid(jwt)
         if not isinstance(decoded, str):
             # Token is valid, proceed with the route logic
-            return redirect('queu')      
+            return redirect('queue')      
         
     #Sinon on vérifie le token inclue dans le qr code et on génère un nouveau jwt
         elif security.is_qr_valid(token):
@@ -155,7 +201,7 @@ def get_spotify_token():
             'response_type': 'code',
             'client_id': 'a47c281636bd4a8b907c14495533e837',
             'scope': scope,
-            'redirect_uri': 'http://192.168.1.95:4000/callback',
+            'redirect_uri': host + ':4000/callback',
             'state': state
         })
     
@@ -174,26 +220,33 @@ def invalid_token():
 @app.route('/get_songs')
 def get_songs():
     jwt = session["user_token"]
-    song_voted = {}
+    song_voted = {} 
     for song in musics_votes.keys():
          if musics_votes[song]["votes_total"] > 0:
             song_voted[song] = musics_votes[song]
-    socketio.emit('song_voted', song_voted)        
-    return jsonify({"song_voted": song_voted, "user":jwt})
 
+
+    return jsonify({"song_voted": song_voted, "user":jwt}) # On a besoin de l'user pour ensuite vérifier 
+                                                           # siil peut cliquer ou non sur le bouton de vote lorsque la queue est affichée
 @app.route('/current_track')
 def current_track():
-    global song_in_queue
+    global next_song
     # access_token = session['access_token'] 
     track_id, track_name, artist_name, album_img_src, track_lenght, track_progress = spotify.get_current_playing_track(spotify_token)
+    print("next_song : " + next_song)
     
-    if song_in_queue == track_id:
-        song_in_queue = ""
+    if next_song == track_id:
+        next_song = ""
 
-    if track_lenght - track_progress < 5000 and song_in_queue == '':  # 1000 mili seconds before the end
-       song_in_queue = spotify.set_next_song(musics_votes, spotify_token, song_in_queue)
-       if song_in_queue:
-            del musics_votes[song_in_queue]
+    if track_lenght - track_progress < 2000 and next_song == '':  # 1.1 seconds before the end
+        next_song = spotify.set_next_song(musics_votes, spotify_token)
+        print("next_song : " + next_song)
+
+        if next_song != "":
+            del musics_votes[next_song]
+            socketio.emit('song_changed', next_song)
+            
+
     
     track_info = {
         'name': track_name,
@@ -204,7 +257,6 @@ def current_track():
     }
 
     socketio.emit('track_update', track_info)
-    
     return jsonify(track_info)
 
 
@@ -238,7 +290,9 @@ def vote():
         song_vote_info["name"] = data.get('song_name')
         song_vote_info["artist_name"] = data.get('artist_name')
         song_vote_info["song_image"] = data.get('song_image')
-        
+        song_vote_info["song_duration"] = data.get('song_duration')
+
+        socketio.emit('vote_processed', {'message': 'A vote has been processed'})
 
         return jsonify(success=True)
 
@@ -272,6 +326,12 @@ def search():
             musics_votes[song_id]["votes"][jwt]["nb_votes"]  = 0
             musics_votes[song_id]["votes_total"] = 0
             musics_votes[song_id]["uri"] = song['uri']
+            song_duration_sec = round(song['duration_ms'] / 1000 )
+            mins = song_duration_sec // 60 
+            seconds = song_duration_sec % 60
+            musics_votes[song_id]["duration"] = f"{mins}:{seconds:02d}"   
+
+
         song['voted'] = has_user_reached_vote_limit(jwt, song_id)
 
          
@@ -293,6 +353,7 @@ def search():
                 data-artistName="{{ song['album']['artists'][0]['name'] }}"
                 data-songImage="{{ song['album']['images'][2]['url'] }}"
                 data-songVoted="{{ song['voted'] }}"
+                data-duration="{{ song['duration'] }}"
                 {% if song['voted'] %}disabled{% endif %}>
                 {% if song['voted'] %}
         <i class="icon-limited-votes"></i> Max vote atteint
@@ -330,5 +391,4 @@ def handle_disconnect():
 
 
 if __name__ == '__main__':
-    socketio.run(debug=True, host='0.0.0.0', port = 7000)
-
+    socketio.run(debug=True, host=host, port = 4000)

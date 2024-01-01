@@ -1,51 +1,53 @@
-function updateQueueDisplay(response) {
-    const dashboardContainer = document.querySelector('.dashboard'); // Make sure you have a container with class 'dashboard'
-    dashboardContainer.innerHTML = ''; // Clear current dashboard contents
 
-    // Example dashboard sections
-    const topSongsSection = document.createElement('div');
-    topSongsSection.className = 'top-songs-section';
 
-    const recentActivitySection = document.createElement('div');
-    recentActivitySection.className = 'recent-activity-section';
+var socket = io.connect('http://' + document.domain + ':' + location.port);
 
-    let songs = response.songs; // Adjust according to your response structure
-    let topSongs = getTopSongs(songs); // Implement this function to sort and get top songs
-    let recentActivities = getRecentActivities(); // Implement to fetch recent activities
+socket.on('connect', function() {
+    console.log('Connected to WebSocket');
+});
 
-    // Populate Top Songs Section
-    topSongs.forEach(song => {
-        let songElement = createSongElement(song); // Implement this to create song elements
-        topSongsSection.appendChild(songElement);
+
+socket.on('vote_processed', function(data) {
+    console.log(data.message);
+    fetchQueueUpdates();
+});
+
+socket.on('song_changed', function(data) {
+    console.log(data.message);
+    fetchQueueUpdates();
+});
+
+
+
+function updateQueueDisplay(data) {
+    const tableBody = document.getElementById('songTableBody');
+    tableBody.innerHTML = ''; // Clear current rows
+
+    let songs = data.song_voted;
+
+    // Sort the songs (assuming this part remains the same)
+    let sortedSongs = Object.entries(songs).sort((a, b) => {
+        return b[1].votes_total - a[1].votes_total;
     });
 
-    // Populate Recent Activities Section
-    recentActivities.forEach(activity => {
-        let activityElement = createActivityElement(activity); // Implement this function
-        recentActivitySection.appendChild(activityElement);
+    // Create and append table rows
+    sortedSongs.forEach(([songId, song]) => {
+        let songRow = document.createElement('tr');
+
+        songRow.innerHTML = `
+            <td><img src="${song.song_image}" alt="Song Image" style="width:50px; height:auto;"></td>
+            <td>${song.name}</td>
+            <td>${song.artist_name}</td>
+            <td class="text-center">${song.votes_total}</td>
+            <td class="text-center">${song.duration}</td>
+            <td><!-- Additional data or controls can go here --></td>
+        `;
+        tableBody.appendChild(songRow);
     });
-
-    // Append sections to dashboard container
-    dashboardContainer.appendChild(topSongsSection);
-    dashboardContainer.appendChild(recentActivitySection);
 }
 
-// Utility functions
-function getTopSongs(songs) {
-    // Logic to determine top songs based on votes or other criteria
-}
 
-function getRecentActivities() {
-    // Fetch or calculate recent activities
-}
 
-function createSongElement(song) {
-    // Create and return a DOM element for a song
-}
-
-function createActivityElement(activity) {
-    // Create and return a DOM element for an activity
-}
 
 
 function fetchQueueUpdates() {
@@ -59,6 +61,8 @@ function fetchQueueUpdates() {
         }
     });
 }
+
+fetchQueueUpdates();
 
 // Call fetchQueueUpdates every few seconds
 setInterval(fetchQueueUpdates, 5000); // 0.5 seconds as an example

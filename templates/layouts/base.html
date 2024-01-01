@@ -9,20 +9,7 @@
   <link rel="icon" type="image/png" href="{{ config.ASSETS_ROOT }}/img/favicon.png">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
-    <script src="{{ url_for('static', filename='assets/js/queue.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/js/vote.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/js/search.js') }}"></script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
-    <script type="text/javascript" charset="utf-8">
-        var socket = io.connect('http://' + document.domain + ':' + location.port);
-    <title>Admin Dashboard</title>
-
-        socket.on('update_data', function(data) {
-            // Update your admin dashboard
-            console.log(data);
-        });
-    </script>
+    
 
   <title>
     Soft UI Dashboard - {% block title %}{% endblock %} | AppSeed
