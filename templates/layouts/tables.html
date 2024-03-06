@@ -23,47 +23,71 @@
 {% block stylesheets %}{% endblock stylesheets %}  
 
 
-<title>Select Parameters</title>
-</head>
-<body>
+    <h1>Manage Votes by Table</h1>
+    <div id="tablesContainer"></div>
 
-<h2>Select Parameters</h2>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchTablesAndVotes();
+        });
 
-<form>
-  <label for="param1">Parameter 1:</label>
-  <select id="param1" name="param1">
-    <option value="value1">Value 1</option>
-    <option value="value2">Value 2</option>
-    <option value="value3">Value 3</option>
-  </select>
-  <br><br>
-  
-  <label for="param2">Parameter 2:</label>
-  <select id="param2" name="param2">
-    <option value="value1">Value 1</option>
-    <option value="value2">Value 2</option>
-    <option value="value3">Value 3</option>
-  </select>
-  <br><br>
-  
-  <label for="param3">Parameter 3:</label>
-  <select id="param3" name="param3">
-    <option value="value1">Value 1</option>
-    <option value="value2">Value 2</option>
-    <option value="value3">Value 3</option>
-  </select>
-  <br><br>
-  
-  <label for="param4">Parameter 4:</label>
-  <select id="param4" name="param4">
-    <option value="value1">Value 1</option>
-    <option value="value2">Value 2</option>
-    <option value="value3">Value 3</option>
-  </select>
-  <br><br>
-  
-  <input type="submit" value="Submit">
-</form>
+        function fetchTablesAndVotes() {
+        fetch('/fetchTablesAndVotes')
+        console.log(response)
+        .then(response => response.json())
+        
+
+        .then(data => {
+            const container = document.getElementById('tablesContainer');
+            container.innerHTML = ''; // Clear existing content
+
+            Object.keys(data).forEach(tableId => {
+                const table = data[tableId];
+                const tableDiv = document.createElement('div');
+                tableDiv.className = 'table';
+                let votesHTML = '';
+                table.votes.forEach(vote => {
+                    votesHTML += `
+                        <div class="song">
+                            ${vote.name} by ${vote.artist_name} - Votes: ${vote.nb_votes}
+                            <button onclick="removeVote(${tableId}, '${vote.music_id}')">Remove Vote</button>
+                        </div>
+                    `;
+                });
+
+                tableDiv.innerHTML = `
+                    <h3>Table ${tableId}</h3>
+                    ${votesHTML}
+                    <div>
+                        <label>Vote Limit: <input type="number" value="${table.voteLimit}" onchange="changeVoteLimit(${tableId}, this.value)"></label>
+                    </div>
+                `;
+                container.appendChild(tableDiv);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching table votes:', error);
+        });
+    }
+
+        function removeVote(tableId, songId) {
+            console.log(`Removing vote for song ${songId} from table ${tableId}`);
+            // Implement AJAX call to remove vote and then refresh the tables and votes
+            // After successful operation, refresh the data
+            fetchTablesAndVotes();
+        }
+
+        function changeVoteLimit(tableId, newLimit) {
+            console.log(`Changing vote limit for table ${tableId} to ${newLimit}`);
+            // Implement AJAX call to change vote limit and then refresh the UI
+            // After successful operation, refresh the data
+            fetchTablesAndVotes();
+        }
+
+        // Initial fetch of tables and votes
+fetchTablesAndVotes();
+    </script>
+
 
 </body>
 </html>

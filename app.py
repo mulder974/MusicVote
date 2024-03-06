@@ -8,14 +8,15 @@ import security
 import time
 from flask_socketio import SocketIO
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
-
+import pprint
 
 #Variables
 global musics_votes 
 musics_votes = {}
+active_tables = []
 next_song = ""
 MAX_VOTES_PER_SONG = 1
-spotify_token = "BQD1QqCTq0fG1E0YHWsZ7qolEGfrQ8CmhHLl1xnHj-nlemvaXedVDBkP_TysnngRFNCgaR6Y0NeSeYbIh5c4AFoVVXjeXDpmhiQ-HfJCDFYY_lOheoOcxL24myXr8xGUG_SbC-wdAFmzreKEWGxfnaYyGoRL7kAH9LckaixnfmWB974mKnjvTcv4wqKLuhyoEeJsE6LPzmUOwaEnGQWcyPCHw5Fesg"
+spotify_token = "BQCoyZiJuWXiudvwELmxbmCCtt90DZsOPxGg-sf_4EJ5ZAHIIeKvVFMVO0aMKrLJgIpBCRvBGDEh953z-brCYbvvTo9-_XYFE2iP_D-wds-6B3N-477kmwXw6XAwpBsK6sKmO5wZnMTZce1CaOnO4fiNtTqvErXOfeNlqUm_S3JNdbjU9Jw4qs9p_PGIsGoBFM_vU-wruvuZoDPOLcTNY4XVgK9U1A"
 # host = 'http://192.168.1.95'
 #Login manager
 host = 'http://127.0.0.1'
@@ -134,14 +135,17 @@ def dashboard():
     return render_template('admin/dashboard.html')
 
 @app.route('/parametres')
+@login_required
 def parametres():
     return render_template('layouts/parametres.html')
 
 @app.route('/musiques')
+@login_required
 def musiques():
     return render_template('layouts/musiques.html')
 
 @app.route('/tables')
+@login_required
 def tables():
     return render_template('layouts/tables.html')
 
@@ -182,12 +186,15 @@ def generate_jwt(   ):
         decoded = security.is_jwt_valid(jwt)
         if not isinstance(decoded, str):
             # Token is valid, proceed with the route logic
+            active_tables.append(jwt)
             return redirect('queue')      
         
     #Sinon on vérifie le token inclue dans le qr code et on génère un nouveau jwt
         elif security.is_qr_valid(token):
                 jwt = security.generate_jwt(token)
-                session['user_token'] = jwt                
+                session['user_token'] = jwt 
+                active_tables.append(jwt)
+               
                 return redirect('queue')          
         else:
         # Token is invalid
@@ -198,6 +205,8 @@ def generate_jwt(   ):
                 jwt = security.generate_jwt(token)
                 session['user_token'] = jwt
                     # Store token in session
+                active_tables.append(jwt)
+
                 return redirect('queue')         
         else:
         # Token is invalid
@@ -242,34 +251,38 @@ def get_songs():
                                                            # siil peut cliquer ou non sur le bouton de vote lorsque la queue est affichée
 @app.route('/current_track')
 def current_track():
-    global next_song
-    # access_token = session['access_token'] 
-    track_id, track_name, artist_name, album_img_src, track_lenght, track_progress = spotify.get_current_playing_track(spotify_token)
-    print("next_song : " + next_song)
-    
-    if next_song == track_id:
-        next_song = ""
-
-    if track_lenght - track_progress < 15000 and next_song == '':  # 1.1 seconds before the end
-        next_song = spotify.set_next_song(musics_votes, spotify_token)
+    try: 
+        global next_song
+        # access_token = session['access_token'] 
+        track_id, track_name, artist_name, album_img_src, track_lenght, track_progress = spotify.get_current_playing_track(spotify_token)
         print("next_song : " + next_song)
+        
+        if next_song == track_id:
+            next_song = ""
 
-        if next_song != "":
-            del musics_votes[next_song]
-            socketio.emit('song_changed', next_song)
-            
+        if track_lenght - track_progress < 15000 and next_song == '':  # 1.1 seconds before the end
+            next_song = spotify.set_next_song(musics_votes, spotify_token)
+            print("next_song : " + next_song)
 
-    
-    track_info = {
-        'name': track_name,
-        'artist': artist_name,
-        'album_image_src': album_img_src,
-        'track_length': track_lenght,
-        'track_progress': track_progress
-    }
+            if next_song != "":
+                del musics_votes[next_song]
+                socketio.emit('song_changed', next_song)
+                
 
-    socketio.emit('track_update', track_info)
-    return jsonify(track_info)
+        
+        track_info = {
+            'name': track_name,
+            'artist': artist_name,
+            'album_image_src': album_img_src,
+            'track_length': track_lenght,
+            'track_progress': track_progress
+        }
+
+        socketio.emit('track_update', track_info)
+        return jsonify(track_info)
+    except:
+        print("Erreur avec le son en cours de lecture")
+        return jsonify({"Exception" :'Erreur avec le son en cours de lecture'})
 
 
 
@@ -384,14 +397,39 @@ def search():
 
     return rendered_results
 
+@app.route('/fetchTablesAndVotes', methods=['GET'])
+def fetchTablesAndVotes():
+    tables_data = {}
+    
+    for table_id in active_tables:
+        tables_data[table_id] = {
+            "votes": [],
+            "voteLimit": MAX_VOTES_PER_SONG,  # Assuming a global variable for max votes
+        }
+
+        # Iterate through each song in the voting data
+        for music in musics_votes.keys(): 
+            if musics_votes[music]["votes_total"] > 0:
+                if table_id in musics_votes[music]["votes"]:
+                    vote_info = musics_votes[music]["votes"][table_id]
+                    tables_data[table_id]["votes"].append({
+                        "music_id": music,
+                        "nb_votes": vote_info["nb_votes"],
+                        "max_vote_reached": vote_info["max_vote_reached"],
+                        "name": musics_votes[music]["name"],
+                        "artist_name": musics_votes[music]["artist_name"],
+                    })
+
+    pprint.pprint(tables_data)
+
+    return jsonify(tables_data)
+
 
 def has_user_reached_vote_limit(jwt, song_id):
     if musics_votes[song_id]["votes"][jwt]["max_vote_reached"]:
         return True
     else:
         return False
-
-
 #==================WEB SOCKETS=========================#
 @socketio.on('connect')
 def handle_connect():
