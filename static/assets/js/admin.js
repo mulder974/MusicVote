@@ -33,15 +33,17 @@ function updateQueueDisplay(data) {
     // Create and append table rows
     sortedSongs.forEach(([songId, song]) => {
         let songRow = document.createElement('tr');
-
+        
         songRow.innerHTML = `
-            <td><img src="${song.song_image}" alt="Song Image" style="width:50px; height:auto;"></td>
-            <td>${song.name}</td>
-            <td>${song.artist_name}</td>
-            <td class="text-center">${song.votes_total}</td>
-            <td class="text-center">${song.duration}</td>
-            <td><!-- Additional data or controls can go here --></td>
-        `;
+        <td class="text-center"><img src="${song.song_image}" alt="Song Image" style="width:50px; height:auto; border-radius: 5px;"></td>
+        <td class="text-center">${song.name}</td>
+        <td class="text-center">${song.artist_name}</td>
+        <td class="text-center">${song.votes_total}</td>
+        <td class="text-center">${song.duration}</td>
+        <td class="text-center" style="display: flex;  justify-content: center;">
+        <a href="songDetail.html?songId=${songId}" class="btn btn-primary">Details</a>
+        </td>
+    `;
         tableBody.appendChild(songRow);
     });
 }

@@ -15,10 +15,10 @@ global musics_votes
 musics_votes = {}
 next_song = ""
 MAX_VOTES_PER_SONG = 1
-spotify_token = "BQDKZqqp_h6F3PxK9pAj7aF4m5ThiryiYD_Jyjyg9UJcV-MdZH3SFusEIWyZzHUjpT1iMoH5f2iwWYzv-O0wQHIt8mHHBe7CunDPNbw4Mhuc9QtKeu7mbMjfIO3bQYvJeKR4e7QHR7j1MfQtk-AEvdxqz-T7Mr6OPMhRjZ7KQmnhg_aeE7k1wYxIjLyPaJARE3m5kBsTKZW9hhbDfuavlPBJc9XCeQ"
-
+spotify_token = "BQD1QqCTq0fG1E0YHWsZ7qolEGfrQ8CmhHLl1xnHj-nlemvaXedVDBkP_TysnngRFNCgaR6Y0NeSeYbIh5c4AFoVVXjeXDpmhiQ-HfJCDFYY_lOheoOcxL24myXr8xGUG_SbC-wdAFmzreKEWGxfnaYyGoRL7kAH9LckaixnfmWB974mKnjvTcv4wqKLuhyoEeJsE6LPzmUOwaEnGQWcyPCHw5Fesg"
+# host = 'http://192.168.1.95'
 #Login manager
-host = 'http://192.168.1.95'
+host = 'http://127.0.0.1'
 app = Flask(__name__)
 socketio = SocketIO(app)
 app.secret_key = 'your_secret_key'
@@ -133,6 +133,18 @@ def callback():
 def dashboard():
     return render_template('admin/dashboard.html')
 
+@app.route('/parametres')
+def parametres():
+    return render_template('layouts/parametres.html')
+
+@app.route('/musiques')
+def musiques():
+    return render_template('layouts/musiques.html')
+
+@app.route('/tables')
+def tables():
+    return render_template('layouts/tables.html')
+
 #================== Log routes =========================#
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -238,7 +250,7 @@ def current_track():
     if next_song == track_id:
         next_song = ""
 
-    if track_lenght - track_progress < 2000 and next_song == '':  # 1.1 seconds before the end
+    if track_lenght - track_progress < 15000 and next_song == '':  # 1.1 seconds before the end
         next_song = spotify.set_next_song(musics_votes, spotify_token)
         print("next_song : " + next_song)
 

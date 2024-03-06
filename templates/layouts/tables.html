@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="apple-touch-icon" sizes="76x76" href="{{ config.ASSETS_ROOT }}/img/apple-icon.png">
+<link rel="icon" type="image/png" href="{{ config.ASSETS_ROOT }}/img/favicon.png">
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<!--     Fonts and icons     -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+<!-- Nucleo Icons -->
+<link href="{{ config.ASSETS_ROOT }}/static/assets/css/nucleo-icons.css" rel="stylesheet" />
+<link href="{{ config.ASSETS_ROOT }}/static/assets/css/nucleo-svg.css" rel="stylesheet" />
+<!-- Font Awesome Icons -->
+<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+<link href="{{ config.ASSETS_ROOT }}/static/assets/css/nucleo-svg.css" rel="stylesheet" />
+<!-- CSS Files -->
+<link id="pagestyle" href="{{ config.ASSETS_ROOT }}/static/assets/css/soft-ui-dashboard.css?v=1.0.6" rel="stylesheet" />
+
+<link id="pagestyle_dark" href="{{ config.ASSETS_ROOT }}/static/assets/css/dark-theme-core.css" rel="stylesheet" />
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}  
+
+
+<title>Select Parameters</title>
+</head>
+<body>
+
+<h2>Select Parameters</h2>
+
+<form>
+  <label for="param1">Parameter 1:</label>
+  <select id="param1" name="param1">
+    <option value="value1">Value 1</option>
+    <option value="value2">Value 2</option>
+    <option value="value3">Value 3</option>
+  </select>
+  <br><br>
+  
+  <label for="param2">Parameter 2:</label>
+  <select id="param2" name="param2">
+    <option value="value1">Value 1</option>
+    <option value="value2">Value 2</option>
+    <option value="value3">Value 3</option>
+  </select>
+  <br><br>
+  
+  <label for="param3">Parameter 3:</label>
+  <select id="param3" name="param3">
+    <option value="value1">Value 1</option>
+    <option value="value2">Value 2</option>
+    <option value="value3">Value 3</option>
+  </select>
+  <br><br>
+  
+  <label for="param4">Parameter 4:</label>
+  <select id="param4" name="param4">
+    <option value="value1">Value 1</option>
+    <option value="value2">Value 2</option>
+    <option value="value3">Value 3</option>
+  </select>
+  <br><br>
+  
+  <input type="submit" value="Submit">
+</form>
+
+</body>
+</html>
