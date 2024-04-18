@@ -26,7 +26,7 @@ next_song = ""
 MAX_VOTES_PER_USER = 1
 spotify_token = "BQALtRXNb6UpvvhucSEzZ4GtHxfTEbuv_NFJagSl0aOGPyYHuDa4__ZVLpRwJ5ViU-a5yaVVLV0Qq6mDp7a24U-4vZyDPF3ESB-7wQwyOrV1bhoNhMbSi3OEkQG6wIiQBOJgsHZTzPLgzvCNt6tzWGO4Vx8MK-MQ3tidMA2rSiukOpPKoJTL7xLD8GYwfc5epOJQHzOL8g-Pg0kxzaHZtfi6kgjGAg"
 
-host = 'http://0.0.0.0'
+host = 'https://pubsong-49cb179e46bc.herokuapp.com/'
 app = Flask(__name__)
 socketio = SocketIO(app)
 app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
