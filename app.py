@@ -235,7 +235,7 @@ def get_spotify_token():
             'response_type': 'code',
             'client_id': 'a47c281636bd4a8b907c14495533e837',
             'scope': scope,
-            'redirect_uri': host + ':4000/callback',
+            'redirect_uri': host + '/callback',
             'state': state
         })
     
