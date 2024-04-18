@@ -9,20 +9,24 @@ import time
 from flask_socketio import SocketIO
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import pprint
+import os
+
+database_url = os.getenv('DATABASE_URL')
+
 
 #Variables
-global musics_votes 
 musics_votes = {}
-active_tables = []
+active_tables = {}
+nb_tables = 0
 next_song = ""
-MAX_VOTES_PER_SONG = 1
-spotify_token = "BQCoyZiJuWXiudvwELmxbmCCtt90DZsOPxGg-sf_4EJ5ZAHIIeKvVFMVO0aMKrLJgIpBCRvBGDEh953z-brCYbvvTo9-_XYFE2iP_D-wds-6B3N-477kmwXw6XAwpBsK6sKmO5wZnMTZce1CaOnO4fiNtTqvErXOfeNlqUm_S3JNdbjU9Jw4qs9p_PGIsGoBFM_vU-wruvuZoDPOLcTNY4XVgK9U1A"
-# host = 'http://192.168.1.95'
-#Login manager
-host = 'http://127.0.0.1'
+MAX_VOTES_PER_USER = 1
+spotify_token = "BQALtRXNb6UpvvhucSEzZ4GtHxfTEbuv_NFJagSl0aOGPyYHuDa4__ZVLpRwJ5ViU-a5yaVVLV0Qq6mDp7a24U-4vZyDPF3ESB-7wQwyOrV1bhoNhMbSi3OEkQG6wIiQBOJgsHZTzPLgzvCNt6tzWGO4Vx8MK-MQ3tidMA2rSiukOpPKoJTL7xLD8GYwfc5epOJQHzOL8g-Pg0kxzaHZtfi6kgjGAg"
+
+host = 'http://0.0.0.0'
 app = Flask(__name__)
 socketio = SocketIO(app)
-app.secret_key = 'your_secret_key'
+app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
+# app.secret_key = 'your_secret_key'
 
 #Login manager
 login_manager = LoginManager()
@@ -177,7 +181,9 @@ def logout():
 
 
 @app.route('/generate_jwt')
-def generate_jwt(   ):
+def generate_jwt():
+    global nb_tables
+
     token = request.args.get('token')
     #On check si il y a dejà un jwt dans la session de l'user
     try :
@@ -186,14 +192,16 @@ def generate_jwt(   ):
         decoded = security.is_jwt_valid(jwt)
         if not isinstance(decoded, str):
             # Token is valid, proceed with the route logic
-            active_tables.append(jwt)
+            nb_tables += 1
+            active_tables[jwt] = {"table_number" : nb_tables ,"max_vote" : MAX_VOTES_PER_USER}
             return redirect('queue')      
         
     #Sinon on vérifie le token inclue dans le qr code et on génère un nouveau jwt
         elif security.is_qr_valid(token):
                 jwt = security.generate_jwt(token)
                 session['user_token'] = jwt 
-                active_tables.append(jwt)
+                nb_tables += 1
+                active_tables[jwt] = {"table_number" : nb_tables ,"max_vote" : MAX_VOTES_PER_USER}
                
                 return redirect('queue')          
         else:
@@ -205,7 +213,8 @@ def generate_jwt(   ):
                 jwt = security.generate_jwt(token)
                 session['user_token'] = jwt
                     # Store token in session
-                active_tables.append(jwt)
+                nb_tables += 1
+                active_tables[jwt] = {"table_number" : nb_tables ,"max_vote" : MAX_VOTES_PER_USER}
 
                 return redirect('queue')         
         else:
@@ -288,43 +297,58 @@ def current_track():
 
 @app.route('/vote', methods=['POST'])
 def vote():
-    try:
-        # Extract user ID from JWT token
-        jwt = session.get("user_token")
-        if not jwt:
-            return jsonify({'message': 'Unauthorized access'}), 401
 
-        decoded = security.is_jwt_valid(jwt)
-        if not isinstance(decoded, str):
-            return jsonify({'message': 'Invalid token'}), 401
+    # Extract user ID from JWT token
+    jwt = session.get("user_token")
+    if not jwt:
+        return jsonify({'message': 'Unauthorized access'}), 401
 
-        data = request.get_json()
-        song_id = data.get('song_id')
-        if not song_id:
-            return jsonify({'message': 'Missing song ID'}), 400
-        
-        song_vote_info = musics_votes[song_id]
+    decoded = security.is_jwt_valid(jwt)
+    if not isinstance(decoded, str):
+        return jsonify({'message': 'Invalid token'}), 401
 
-        song_vote_info["votes_total"] += 1
-        # Increment the vote count for the current user
-        song_vote_info["votes"][jwt]["nb_votes"] += 1
-        if song_vote_info["votes"][jwt]["nb_votes"] >= MAX_VOTES_PER_SONG:
-            song_vote_info["votes"][jwt]["max_vote_reached"] = True
-             
+    data = request.get_json()
+    song_id = data.get('song_id')
+    if not song_id:
+        return jsonify({'message': 'Missing song ID'}), 400
+    
+    song_vote_info = musics_votes[song_id]
+
+    song_vote_info["votes_total"] += 1
+    # Increment the vote count for the current user
+    song_vote_info["votes"][jwt]["nb_votes"] += 1
+    if song_vote_info["votes"][jwt]["nb_votes"] >= active_tables[jwt]["max_vote"]:
+        song_vote_info["votes"][jwt]["max_vote_reached"] = True
             
-        song_vote_info["name"] = data.get('song_name')
-        song_vote_info["artist_name"] = data.get('artist_name')
-        song_vote_info["song_image"] = data.get('song_image')
-        song_vote_info["song_duration"] = data.get('song_duration')
+        
+    song_vote_info["name"] = data.get('song_name')
+    song_vote_info["artist_name"] = data.get('artist_name')
+    song_vote_info["song_image"] = data.get('song_image')
+    song_vote_info["song_duration"] = data.get('song_duration')
 
-        socketio.emit('vote_processed', {'message': 'A vote has been processed'})
+    socketio.emit('vote_processed', {'message': 'A vote has been processed'})
+    
+    pprint.pprint(active_tables)
 
+    return jsonify(success=True)
+
+
+@app.route('/changeVoteLimit', methods=['POST'])
+def change_vote_limit():
+    data = request.json  # Assuming the limit is sent as JSON
+    limit = data.get('limit')
+    table_id = data.get('tableId')  # Assuming you're also sending the table ID
+
+    # Example: Update the active_tables structure or database with the new limit
+    # This is a placeholder. Adjust according to your actual data structure.
+    if table_id in active_tables:
+        active_tables[table_id]["max_vote"] = limit
+        print(active_tables)
         return jsonify(success=True)
+    else:
+        return jsonify(success=False, message="Table ID not found"), 404
 
-    except Exception as e:
-        # Log the exception for debugging purposes
-        print(f"Error in vote route: {e}")
-        return jsonify({'message': 'An error occurred processing your vote'}), 500
+
 
 
 
@@ -401,10 +425,10 @@ def search():
 def fetchTablesAndVotes():
     tables_data = {}
     
-    for table_id in active_tables:
-        tables_data[table_id] = {
+    for table_id in active_tables.keys():
+        tables_data[table_id] = {"table_number:" : active_tables[table_id]["table_number"],  
             "votes": [],
-            "voteLimit": MAX_VOTES_PER_SONG,  # Assuming a global variable for max votes
+            "voteLimit": MAX_VOTES_PER_USER,  # Assuming a global variable for max votes
         }
 
         # Iterate through each song in the voting data
@@ -430,7 +454,9 @@ def has_user_reached_vote_limit(jwt, song_id):
         return True
     else:
         return False
+    
 #==================WEB SOCKETS=========================#
+    
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
@@ -441,4 +467,4 @@ def handle_disconnect():
 
 
 if __name__ == '__main__':
-    socketio.run(debug=True, host=host, port = 4000)
+    socketio.run(debug=False, host=host, port = 4000)

@@ -11,13 +11,12 @@ import db
 
 
 def good_credentials(username,pwd):
-        
-            user = db.get_user(username)
-            if user and pwd == user[2]:
-                return True
-        
+    user = db.get_user(username)
+    if user and pwd == user[2]:
+        return True
 
-        
+
+
 
 def generate_token(length):
     # choose from all lowercase letter

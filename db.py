@@ -4,7 +4,9 @@ from psycopg2 import sql
 import security
 
 
-postgresql_str = "postgresql://mulder974:nghtIMk7xrP3@ep-autumn-cake-33374612.eu-central-1.aws.neon.tech/PubSong?sslmode=require"
+postgresql_str = os.getenv('DATABASE_URL')
+
+# postgresql_str = "postgresql://mulder974:nghtIMk7xrP3@ep-autumn-cake-33374612.eu-central-1.aws.neon.tech/PubSong?sslmode=require"
 
 # Function to generate tokens
 def generate_tokens(n):
