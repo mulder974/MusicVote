@@ -103,7 +103,7 @@ def callback():
     # Your Spotify API credentials
     client_id = 'a47c281636bd4a8b907c14495533e837'
     client_secret = 'c86c9093985040b5a6253f3b66d1850a'
-    redirect_uri = host + ':4000/callback'
+    redirect_uri = host + '/callback'
 
 
     # Encode Client ID and Secret in Base64
