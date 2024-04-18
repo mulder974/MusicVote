@@ -294,6 +294,7 @@ def current_track():
         socketio.emit('track_update', track_info)
         return jsonify(track_info)
     except:
+        print(Exception)
         print("Erreur avec le son en cours de lecture")
         return jsonify({"Exception" :'Erreur avec le son en cours de lecture'})
 
