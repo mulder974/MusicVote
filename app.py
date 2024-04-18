@@ -10,8 +10,12 @@ from flask_socketio import SocketIO
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import pprint
 import os
+import logging
 
-database_url = os.getenv('DATABASE_URL')
+
+secret_key = os.getenv('SECRET_KEY')
+
+logging.basicConfig(filename='error.log', level=logging.WARNING)
 
 
 #Variables
